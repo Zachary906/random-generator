@@ -1,0 +1,13 @@
+{
+  "buildCommand": "echo 'Static site'",
+  "outputDirectory": ".",
+  "env": {
+    "BROWSER_CACHE_SECONDS": "0"
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

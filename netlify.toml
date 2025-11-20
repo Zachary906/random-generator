@@ -1,0 +1,13 @@
+[build]
+  command = "echo 'Static site - no build needed'"
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[cache]
+  [cache.cachecontrol]
+    for = "/"
+    values = ["max-age=0, must-revalidate"]

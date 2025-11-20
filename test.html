@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+            background: #f0f0f0;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            padding: 20px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Click Test</h1>
+    <p>If these buttons work, the problem is with the main page:</p>
+    
+    <button class="test-button" onclick="alert('Button 1 clicked!')">Test Button 1</button>
+    <button class="test-button" onclick="alert('Button 2 clicked!')">Test Button 2</button>
+    <button class="test-button" id="test3">Test Button 3 (addEventListener)</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        console.log('Test script loaded');
+        document.getElementById('test3').addEventListener('click', function() {
+            document.getElementById('result').innerHTML = '<p style="color: green; font-size: 20px;">✓ JavaScript click events are working!</p>';
+        });
+    </script>
+</body>
+</html>

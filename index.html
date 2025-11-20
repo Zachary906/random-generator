@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Wheel Spinner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Selection Screen -->
+    <div id="selectionScreen" class="selection-screen">
+        <div class="selection-container">
+            <h1 class="selection-title">Choose Your Pokémon Generation</h1>
+            <div id="debugInfo" style="position: fixed; top: 50px; right: 10px; background: rgba(0,0,0,0.9); color: lime; padding: 10px; font-family: monospace; font-size: 12px; max-width: 300px; z-index: 99999; border: 2px solid lime;"></div>
+            <button onclick="if(window.testWheelOpen){window.testWheelOpen()}else{alert('Not ready')}" style="position: fixed; top: 100px; right: 10px; z-index: 99999; background: #00ff00; color: black; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold;">TEST GEN 1</button>
+            <button id="mainShinyToggle" class="main-shiny-toggle">✨ Toggle Shiny Mode</button>
+            <button onclick="if(window.showConsoleOverlay){window.showConsoleOverlay()}else{alert('Console not loaded yet')}" style="position: fixed; top: 10px; right: 10px; z-index: 99999; background: #ff0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold;">CONSOLE</button>
+            <div class="wheel-options">
+                <div class="wheel-option" data-generation="1" onclick="if(window.openWheelGen){window.openWheelGen('1')}">
+                    <div class="option-icon">🔴</div>
+                    <h2>Generation 1</h2>
+                    <p>Kanto Region</p>
+                    <p class="gen-range">#1 - #151</p>
+                </div>
+                <div class="wheel-option" data-generation="2" onclick="if(window.openWheelGen){window.openWheelGen('2')}">
+                    <div class="option-icon">🟡</div>
+                    <h2>Generation 2</h2>
+                    <p>Johto Region</p>
+                    <p class="gen-range">#152 - #251</p>
+                </div>
+                <div class="wheel-option" data-generation="3" onclick="if(window.openWheelGen){window.openWheelGen('3')}">
+                    <div class="option-icon">🔵</div>
+                    <h2>Generation 3</h2>
+                    <p>Hoenn Region</p>
+                    <p class="gen-range">#252 - #386</p>
+                </div>
+                <div class="wheel-option" data-generation="4" onclick="if(window.openWheelGen){window.openWheelGen('4')}">
+                    <div class="option-icon">💎</div>
+                    <h2>Generation 4</h2>
+                    <p>Sinnoh Region</p>
+                    <p class="gen-range">#387 - #493</p>
+                </div>
+                <div class="wheel-option" data-generation="5" onclick="if(window.openWheelGen){window.openWheelGen('5')}">
+                    <div class="option-icon">⚫</div>
+                    <h2>Generation 5</h2>
+                    <p>Unova Region</p>
+                    <p class="gen-range">#494 - #649</p>
+                </div>
+                <div class="wheel-option" data-generation="6" onclick="if(window.openWheelGen){window.openWheelGen('6')}">
+                    <div class="option-icon">✨</div>
+                    <h2>Generation 6</h2>
+                    <p>Kalos Region</p>
+                    <p class="gen-range">#650 - #721</p>
+                </div>
+                <div class="wheel-option" data-generation="7" onclick="if(window.openWheelGen){window.openWheelGen('7')}">
+                    <div class="option-icon">🌺</div>
+                    <h2>Generation 7</h2>
+                    <p>Alola Region</p>
+                    <p class="gen-range">#722 - #809</p>
+                </div>
+                <div class="wheel-option" data-generation="8" onclick="if(window.openWheelGen){window.openWheelGen('8')}">
+                    <div class="option-icon">⚔️</div>
+                    <h2>Generation 8</h2>
+                    <p>Galar Region</p>
+                    <p class="gen-range">#810 - #905</p>
+                </div>
+                <div class="wheel-option" data-generation="9" onclick="if(window.openWheelGen){window.openWheelGen('9')}">
+                    <div class="option-icon">🍇</div>
+                    <h2>Generation 9</h2>
+                    <p>Paldea Region</p>
+                    <p class="gen-range">#906 - #1025</p>
+                </div>
+                <div class="wheel-option special" data-generation="legendary" onclick="if(window.openWheelGen){window.openWheelGen('legendary')}">
+                    <div class="option-icon">⭐</div>
+                    <h2>Legendary & Mythical</h2>
+                    <p>Ultra Rare Pokémon</p>
+                    <p class="gen-range">Special Collection</p>
+                </div>
+                <div class="wheel-option special eeveelution" data-generation="eeveelution" onclick="if(window.openWheelGen){window.openWheelGen('eeveelution')}">
+                    <div class="option-icon">🦊</div>
+                    <h2>Eeveelutions</h2>
+                    <p>Eevee & Evolutions</p>
+                    <p class="gen-range">All 9 Forms</p>
+                </div>
+                <div class="wheel-option special paradox" data-generation="paradox" onclick="if(window.openWheelGen){window.openWheelGen('paradox')}">
+                    <div class="option-icon">⏰</div>
+                    <h2>Paradox Pokémon</h2>
+                    <p>Ancient & Future Forms</p>
+                    <p class="gen-range">Gen 9 Exclusives</p>
+                </div>
+                <div class="wheel-option special starters" data-generation="starters" onclick="if(window.openWheelGen){window.openWheelGen('starters')}">
+                    <div class="option-icon">🔥💧🌿</div>
+                    <h2>Starter Pokémon</h2>
+                    <p>All Starters & Evolutions</p>
+                    <p class="gen-range">Gen 1-9</p>
+                </div>
+                <div class="wheel-option special zmoves" data-generation="zmoves" onclick="if(window.openWheelGen){window.openWheelGen('zmoves')}">
+                    <div class="option-icon">💎✨</div>
+                    <h2>Z-Moves</h2>
+                    <p>All Z-Crystals & Moves</p>
+                    <p class="gen-range">Gen 7</p>
+                </div>
+                <div class="wheel-option special gigantamax" data-generation="gigantamax" onclick="if(window.openWheelGen){window.openWheelGen('gigantamax')}">
+                    <div class="option-icon">⚡🔴</div>
+                    <h2>Gigantamax</h2>
+                    <p>All Gigantamax Forms</p>
+                    <p class="gen-range">Gen 8</p>
+                </div>
+                <div class="wheel-option special tera" data-generation="tera" onclick="if(window.openWheelGen){window.openWheelGen('tera')}">
+                    <div class="option-icon">💎✨</div>
+                    <h2>Terastallized</h2>
+                    <p>Paldean Tera Pokémon</p>
+                    <p class="gen-range">Gen 9</p>
+                </div>
+                <div class="wheel-option special regional" data-generation="regional" onclick="if(window.openWheelGen){window.openWheelGen('regional')}">
+                    <div class="option-icon">🌍🔄</div>
+                    <h2>Regional Forms</h2>
+                    <p>Alola, Galar, Hisui & Paldea</p>
+                    <p class="gen-range">Gen 7-9</p>
+                </div>
+                <div class="wheel-option special mega" data-generation="mega" onclick="if(window.openWheelGen){window.openWheelGen('mega')}">
+                    <div class="option-icon">🔮⚡</div>
+                    <h2>Mega Evolution</h2>
+                    <p>All Mega Evolutions</p>
+                    <p class="gen-range">Gen 6-7</p>
+                </div>
+                <div class="wheel-option special games" data-generation="games" onclick="if(window.openWheelGen){window.openWheelGen('games')}">
+                    <div class="option-icon">🎮📱</div>
+                    <h2>Pokémon Games</h2>
+                    <p>All Mainline Games</p>
+                    <p class="gen-range">1996-2022</p>
+                </div>
+                <div class="wheel-option special ultimate" data-generation="ultimate" onclick="if(window.openWheelGen){window.openWheelGen('ultimate')}">
+                    <div class="option-icon">🌟👑✨</div>
+                    <h2>ULTIMATE WHEEL</h2>
+                    <p>Everything Combined!</p>
+                    <p class="gen-range">ALL Pokémon, Z-Moves & Games</p>
+                </div>
+                <div class="wheel-option special pokedex" id="pokedexOption" onclick="document.getElementById('selectionScreen').style.display='none';document.getElementById('pokedexScreen').style.display='flex';">
+                    <div class="option-icon">📖</div>
+                    <h2>POKÉDEX SEARCH</h2>
+                    <p>Look Up Any Pokémon</p>
+                    <p class="gen-range">Search by Name or Number</p>
+                </div>
+                <div class="wheel-option special random-select" id="randomWheelOption" data-generation="random" onclick="if(window.openWheelGen){window.openWheelGen('random')}">
+                    <div class="option-icon">🎲</div>
+                    <h2>RANDOM MODE</h2>
+                    <p>Pick a Random Wheel</p>
+                    <p class="gen-range">Surprise Me!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pokédex Search Screen -->
+    <div id="pokedexScreen" class="pokedex-screen" style="display: none;">
+        <div class="pokedex-container">
+            <button id="pokedexBackBtn" class="back-button">← Back to Menu</button>
+            <h1 class="pokedex-title">🔍 Pokédex Search</h1>
+            
+            <!-- Search Categories -->
+            <div class="search-categories">
+                <button class="category-btn active" data-category="none" style="background: #999; opacity: 0.6;">🔍 Select Category</button>
+                <button class="category-btn" data-category="pokemon">🎮 Pokémon</button>
+                <button class="category-btn" data-category="moves">⚔️ Moves</button>
+                <button class="category-btn" data-category="abilities">✨ Abilities</button>
+                <button class="category-btn" data-category="items">🎒 Items</button>
+                <button class="category-btn" data-category="types">🔥 Types</button>
+                <button class="category-btn" data-category="pokeballs">⚾ Poké Balls</button>
+                <button class="category-btn" data-category="tms">📀 TMs</button>
+                <button class="category-btn" data-category="gmax">💥 G-Max Moves</button>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="pokemonSearch" class="pokemon-search" placeholder="Enter Pokémon name or number..." autocomplete="off">
+                <button id="searchBtn" class="search-button" onclick="if(window.searchPokemon){window.searchPokemon()}">Search</button>
+                <button id="randomSuggestBtn" class="search-button" style="background: linear-gradient(135deg, #ff8c00 0%, #ff2d55 100%); margin-left: 10px;" onclick="if(window.randomSuggest){window.randomSuggest()}">🎲 Random</button>
+            </div>
+            <div id="pokedexResult" class="pokedex-result"></div>
+        </div>
+    </div>
+
+    <!-- Main Wheel Screen -->
+    <div id="mainScreen" class="main-screen" style="display: none;">
+    <div class="container">
+        <button id="backBtn" class="back-button" onclick="if(window.backToSelection){window.backToSelection()}">← Change Wheel</button>
+        <h1>Pokémon Wheel Spinner</h1>
+        <p class="subtitle">Original 151 Pokémon</p>
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheelCanvas"></canvas>
+            <div class="click-instruction">Click the Pokéball to spin!</div>
+        </div>
+        <div class="controls">
+            <div id="loading" class="loading">Loading Pokémon data...</div>
+        </div>
+    </div>
+    
+    <!-- Popup Modal -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div id="result" class="result"></div>
+            <button id="closeModal" class="spin-button" onclick="if(window.closeResultModal){window.closeResultModal()}">CLOSE</button>
+        </div>
+    </div>
+    </div>
+    
+    <script>
+        // Force cache refresh with timestamp - AGGRESSIVE MODE
+        const scriptUrl = 'script.js?bust=' + Math.random() + '&t=' + Date.now();
+        console.log('Loading script:', scriptUrl);
+        const scriptTag = document.createElement('script');
+        scriptTag.src = scriptUrl;
+        scriptTag.onload = function() {
+            console.log('=== SCRIPT.JS LOADED ===');
+            document.title = 'Loaded ' + Date.now();
+        };
+        scriptTag.onerror = function() {
+            alert('SCRIPT FAILED TO LOAD!');
+        };
+        document.body.appendChild(scriptTag);
+    </script>
+    <script>
+        // Run after script.js loads
+        console.log('=== INLINE SCRIPT RUNNING ===');
+        console.log('HTML inline script executed');
+        console.log('Pokemon array exists:', typeof pokemon !== 'undefined');
+        console.log('wheelOptions found:', document.querySelectorAll('.wheel-option').length);
+        
+        // Add emergency click handler
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('=== DOM CONTENT LOADED ===');
+            const allOptions = document.querySelectorAll('.wheel-option');
+            console.log('Total wheel options after DOMContentLoaded:', allOptions.length);
+        });
+    </script>
+</body>
+</html>

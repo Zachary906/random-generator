@@ -1,0 +1,25 @@
+{
+  "name": "pokemon-wheel-spinner",
+  "version": "1.0.0",
+  "description": "Interactive Pokémon wheel spinner with Pokédex search",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000",
+    "build": "echo 'Static site - no build needed'",
+    "test": "echo 'Tests to be implemented'"
+  },
+  "keywords": [
+    "pokemon",
+    "wheel",
+    "spinner",
+    "pokedex",
+    "interactive"
+  ],
+  "author": "Zachary906",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zachary906/random-generator.git"
+  }
+}

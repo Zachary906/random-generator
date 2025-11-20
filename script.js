@@ -218,6 +218,7 @@ let isTeraMode = false;
 let isRegionalMode = false;
 let isMegaMode = false;
 let isGamesMode = false;
+let isFanmadeMode = false;
 let isUltimateMode = false;
 
 // Pokémon Games list
@@ -626,6 +627,41 @@ const paradoxInfo = {
     1022: { era: 'Future', basedOn: 'Terrakion' },
     1023: { era: 'Future', basedOn: 'Cobalion' },
 };
+
+// Fan-Made Pokémon collection (from popular fan projects)
+// These represent creative fan designs from the Pokémon community
+const fanmadePokemon = [
+    // Pokémon Uranium
+    { id: 'uranium-001', name: 'Numel', type: 'Fire', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
+    { id: 'uranium-002', name: 'Chupacho', type: 'Fire/Dark', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
+    { id: 'uranium-003', name: 'Barewl', type: 'Dark/Ground', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
+    { id: 'uranium-004', name: 'Owten', type: 'Water/Flying', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
+    { id: 'uranium-005', name: 'Owtwo', type: 'Water/Flying', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
+    
+    // Pokémon Insurgence
+    { id: 'insurgence-001', name: 'Seikamater', type: 'Bug/Fairy', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
+    { id: 'insurgence-002', name: 'Delphox Mega X', type: 'Fire/Psychic', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
+    { id: 'insurgence-003', name: 'Feraligatr Mega Z', type: 'Water/Ice', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
+    { id: 'insurgence-004', name: 'Meowstic Mega', type: 'Psychic/Fairy', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
+    
+    // Pokémon Brick Bronze inspired
+    { id: 'bbronze-001', name: 'Voodoom', type: 'Dark/Ghost', gen: 'Brick Bronze', creator: 'Community' },
+    { id: 'bbronze-002', name: 'Sparkit', type: 'Electric', gen: 'Brick Bronze', creator: 'Community' },
+    { id: 'bbronze-003', name: 'Voltain', type: 'Electric/Ground', gen: 'Brick Bronze', creator: 'Community' },
+    { id: 'bbronze-004', name: 'Dextralis', type: 'Steel/Psychic', gen: 'Brick Bronze', creator: 'Community' },
+    
+    // Popular Community Fan Designs
+    { id: 'fan-001', name: 'Drakraken', type: 'Dragon/Water', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-002', name: 'Spectreon', type: 'Ghost/Electric', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-003', name: 'Mythiceon', type: 'Psychic/Fairy', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-004', name: 'Dreadwing', type: 'Dark/Flying', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-005', name: 'Crystalion', type: 'Rock/Psychic', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-006', name: 'Infernioth', type: 'Fire/Bug', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-007', name: 'Aquadrive', type: 'Water/Electric', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-008', name: 'Terramorph', type: 'Ground/Grass', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-009', name: 'Vortexian', type: 'Flying/Psychic', gen: 'Fan Art', creator: 'Community' },
+    { id: 'fan-010', name: 'Silverthorn', type: 'Grass/Steel', gen: 'Fan Art', creator: 'Community' },
+];
 
 // List of all Starter Pokémon and their evolutions
 const starterPokemon = [
@@ -2508,7 +2544,7 @@ function triggerWheelMode(generation) {
     
     // Handle random mode - pick a random generation
     if (generation === 'random') {
-        const allGenerations = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'legendary', 'eeveelution', 'paradox', 'starters', 'zmoves', 'gigantamax', 'tera', 'regional', 'mega', 'games', 'ultimate'];
+        const allGenerations = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'legendary', 'eeveelution', 'paradox', 'starters', 'zmoves', 'gigantamax', 'tera', 'regional', 'mega', 'games', 'fanmade', 'ultimate'];
         generation = allGenerations[Math.floor(Math.random() * allGenerations.length)];
         console.log('Random mode selected:', generation);
     }
@@ -2523,6 +2559,7 @@ function triggerWheelMode(generation) {
     isRegionalMode = (generation === 'regional');
     isMegaMode = (generation === 'mega');
     isGamesMode = (generation === 'games');
+    isFanmadeMode = (generation === 'fanmade');
     isUltimateMode = (generation === 'ultimate');
 
     // Reuse switch for subtitle
@@ -2547,6 +2584,7 @@ function triggerWheelMode(generation) {
         case 'regional': subtitle = 'Regional Variants'; pokemonLimit=0; break;
         case 'mega': subtitle = 'Mega Evolutions'; pokemonLimit=0; break;
         case 'games': subtitle = 'Pokémon Games'; pokemonLimit=0; break;
+        case 'fanmade': subtitle = 'Fan-Made Pokémon'; pokemonLimit=0; break;
         case 'ultimate': subtitle = 'ULTIMATE WHEEL - All Pokémon!'; pokemonLimit=0; break;
     }
     selectedGeneration = subtitle;
@@ -2817,6 +2855,22 @@ async function fetchAllPokemon() {
                 shinySprite: p.sprites.other['official-artwork'].front_shiny || p.sprites.front_shiny,
                 types: p.types.map(t => t.type.name)
             }));
+            
+        } else if (isFanmadeMode) {
+            console.log(`Loading ${fanmadePokemon.length} Fan-Made Pokémon...`);
+            
+            // Fan-made Pokémon don't need API calls, just use the local array
+            pokemon = fanmadePokemon.map((fanmon, index) => ({
+                name: fanmon.name,
+                id: fanmon.id,
+                type: fanmon.type,
+                generation: fanmon.gen,
+                creator: fanmon.creator,
+                sprite: null, // No sprite available for fan-made
+                types: fanmon.type.split('/').map(t => t.trim())
+            }));
+            
+            console.log(`Loaded ${pokemon.length} Fan-Made Pokémon`);
             
         } else if (isUltimateMode) {
             console.log('Fetching ULTIMATE WHEEL - ALL Pokémon, Z-Moves, and Games combined!');

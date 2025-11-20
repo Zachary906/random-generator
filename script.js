@@ -1304,7 +1304,7 @@ async function searchPokemonCategory(query) {
                         </div>
                         <div style="margin-top: 10px; font-size: 0.9rem; color: #666; text-align: center;" id="gameVersion">${flavorTextEntries[0].version.name.toUpperCase()}</div>
                         <div style="margin-top: 15px; text-align: center;">
-                            <button id="showAllBtn" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1rem;">Show All Entries</button>
+                            <button id="showAllBtn" onclick="window.toggleDexView();" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1rem;">Show All Entries</button>
                         </div>
                     ` : ''}
                 </div>
@@ -1321,7 +1321,7 @@ async function searchPokemonCategory(query) {
                         `).join('')}
                     </div>
                     <div style="margin-top: 15px; text-align: center;">
-                        <button id="showSingleBtn" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1rem;">Show One at a Time</button>
+                        <button id="showSingleBtn" onclick="window.toggleDexView();" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1rem;">Show One at a Time</button>
                     </div>
                 </div>
             `;
@@ -1410,13 +1410,10 @@ async function searchPokemonCategory(query) {
         if (flavorTextEntries.length > 1) {
             const prevBtn = document.getElementById('prevEntry');
             const nextBtn = document.getElementById('nextEntry');
-            const showAllBtn = document.getElementById('showAllBtn');
-            const showSingleBtn = document.getElementById('showSingleBtn');
             
             if (prevBtn) prevBtn.addEventListener('click', () => navigateDexEntry(-1));
             if (nextBtn) nextBtn.addEventListener('click', () => navigateDexEntry(1));
-            if (showAllBtn) showAllBtn.addEventListener('click', toggleDexView);
-            if (showSingleBtn) showSingleBtn.addEventListener('click', toggleDexView);
+            // Toggle buttons use inline onclick handlers
         }
         
     } catch (error) {

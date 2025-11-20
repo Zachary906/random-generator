@@ -29,7 +29,7 @@ An interactive web application featuring a spinning wheel that randomly selects 
 
 ## 🚀 Getting Started
 
-### Option 1: Local Development
+### Local Setup
 ```bash
 # Clone the repository
 git clone https://github.com/Zachary906/random-generator.git
@@ -44,7 +44,7 @@ python3 -m http.server 8000
 # Visit http://localhost:8000
 ```
 
-### Option 2: Direct File Access
+### Direct File Access
 Simply open `index.html` in a modern web browser.
 
 ## 📋 Requirements

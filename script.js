@@ -2498,8 +2498,9 @@ wheelOptions.forEach((option, index) => {
         // Simplest possible test
         const gen = option.getAttribute('data-generation');
         option.onclick = function() {
-            alert('WHEEL CLICKED: ' + gen);
-            showDebug('WHEEL ONCLICK FIRED: ' + gen);
+            if(window.openWheelGen) {
+                window.openWheelGen(gen);
+            }
         };
         
         // Verify it was set
@@ -2860,15 +2861,34 @@ async function fetchAllPokemon() {
             console.log(`Loading ${fanmadePokemon.length} Fan-Made Pokémon...`);
             
             // Fan-made Pokémon don't need API calls, just use the local array
-            pokemon = fanmadePokemon.map((fanmon, index) => ({
-                name: fanmon.name,
-                id: fanmon.id,
-                type: fanmon.type,
-                generation: fanmon.gen,
-                creator: fanmon.creator,
-                sprite: null, // No sprite available for fan-made
-                types: fanmon.type.split('/').map(t => t.trim())
-            }));
+            pokemon = fanmadePokemon.map((fanmon, index) => {
+                // Create SVG images for fan-made Pokémon
+                const typeColors = {
+                    'Fire': '#ff6b35', 'Water': '#004e89', 'Grass': '#00b894',
+                    'Electric': '#ffd700', 'Ice': '#1e90ff', 'Fighting': '#d4441e',
+                    'Poison': '#c71585', 'Ground': '#8b7500', 'Flying': '#87ceeb',
+                    'Psychic': '#ff69b4', 'Bug': '#6b8e23', 'Rock': '#708090',
+                    'Ghost': '#483d8b', 'Dragon': '#ff1493', 'Dark': '#2f4f4f',
+                    'Steel': '#a9a9a9', 'Fairy': '#ffb7c5'
+                };
+                const types = fanmon.type.split('/').map(t => t.trim());
+                const bgColor = typeColors[types[0]] || '#999999';
+                
+                const spriteUrl = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:${encodeURIComponent(bgColor)};stop-opacity:0.3' /%3E%3Cstop offset='100%25' style='stop-color:${encodeURIComponent(bgColor)};stop-opacity:0.8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='${encodeURIComponent(bgColor)}' width='200' height='200'/%3E%3Crect fill='url(%23grad)' width='200' height='200'/%3E%3Ctext x='100' y='80' font-size='32' font-weight='bold' text-anchor='middle' fill='white'%3E🎨%3C/text%3E%3Ctext x='100' y='130' font-size='16' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3E${encodeURIComponent(fanmon.name)}%3C/text%3E%3Ctext x='100' y='155' font-size='12' text-anchor='middle' fill='white' font-family='Arial'%3E${encodeURIComponent(fanmon.type)}%3C/text%3E%3C/svg%3E`;
+                
+                const shinyUrl = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3ClinearGradient id='grad2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23ffd700;stop-opacity:0.4' /%3E%3Cstop offset='100%25' style='stop-color:%23ffed4e;stop-opacity:0.9' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='%23fff9e6' width='200' height='200'/%3E%3Crect fill='url(%23grad2)' width='200' height='200'/%3E%3Ctext x='100' y='80' font-size='32' font-weight='bold' text-anchor='middle' fill='%23ff6b00'%3E✨%3C/text%3E%3Ctext x='100' y='130' font-size='16' font-weight='bold' text-anchor='middle' fill='%23ff6b00' font-family='Arial'%3E${encodeURIComponent(fanmon.name)}%3C/text%3E%3Ctext x='100' y='155' font-size='12' text-anchor='middle' fill='%23ff6b00' font-family='Arial'%3E${encodeURIComponent(fanmon.type)}%3C/text%3E%3C/svg%3E`;
+                
+                return {
+                    name: fanmon.name,
+                    id: fanmon.id,
+                    type: fanmon.type,
+                    generation: fanmon.gen,
+                    creator: fanmon.creator,
+                    sprite: spriteUrl,
+                    shinySprite: shinyUrl,
+                    types: types
+                };
+            });
             
             console.log(`Loaded ${pokemon.length} Fan-Made Pokémon`);
             

@@ -627,41 +627,6 @@ const paradoxInfo = {
     1023: { era: 'Future', basedOn: 'Cobalion' },
 };
 
-// Fan-Made Pokémon collection (from popular fan projects)
-// These represent creative fan designs from the Pokémon community
-const fanmadePokemon = [
-    // Pokémon Uranium
-    { id: 'uranium-001', name: 'Numel', type: 'Fire', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
-    { id: 'uranium-002', name: 'Chupacho', type: 'Fire/Dark', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
-    { id: 'uranium-003', name: 'Barewl', type: 'Dark/Ground', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
-    { id: 'uranium-004', name: 'Owten', type: 'Water/Flying', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
-    { id: 'uranium-005', name: 'Owtwo', type: 'Water/Flying', gen: 'Uranium', creator: 'Pokémon Uranium Team' },
-    
-    // Pokémon Insurgence
-    { id: 'insurgence-001', name: 'Seikamater', type: 'Bug/Fairy', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
-    { id: 'insurgence-002', name: 'Delphox Mega X', type: 'Fire/Psychic', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
-    { id: 'insurgence-003', name: 'Feraligatr Mega Z', type: 'Water/Ice', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
-    { id: 'insurgence-004', name: 'Meowstic Mega', type: 'Psychic/Fairy', gen: 'Insurgence', creator: 'Pokémon Insurgence Team' },
-    
-    // Pokémon Brick Bronze inspired
-    { id: 'bbronze-001', name: 'Voodoom', type: 'Dark/Ghost', gen: 'Brick Bronze', creator: 'Community' },
-    { id: 'bbronze-002', name: 'Sparkit', type: 'Electric', gen: 'Brick Bronze', creator: 'Community' },
-    { id: 'bbronze-003', name: 'Voltain', type: 'Electric/Ground', gen: 'Brick Bronze', creator: 'Community' },
-    { id: 'bbronze-004', name: 'Dextralis', type: 'Steel/Psychic', gen: 'Brick Bronze', creator: 'Community' },
-    
-    // Popular Community Fan Designs
-    { id: 'fan-001', name: 'Drakraken', type: 'Dragon/Water', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-002', name: 'Spectreon', type: 'Ghost/Electric', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-003', name: 'Mythiceon', type: 'Psychic/Fairy', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-004', name: 'Dreadwing', type: 'Dark/Flying', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-005', name: 'Crystalion', type: 'Rock/Psychic', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-006', name: 'Infernioth', type: 'Fire/Bug', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-007', name: 'Aquadrive', type: 'Water/Electric', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-008', name: 'Terramorph', type: 'Ground/Grass', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-009', name: 'Vortexian', type: 'Flying/Psychic', gen: 'Fan Art', creator: 'Community' },
-    { id: 'fan-010', name: 'Silverthorn', type: 'Grass/Steel', gen: 'Fan Art', creator: 'Community' },
-];
-
 // List of all Starter Pokémon and their evolutions
 const starterPokemon = [
     // Gen 1
@@ -2544,7 +2509,7 @@ function triggerWheelMode(generation) {
     
     // Handle random mode - pick a random generation
     if (generation === 'random') {
-        const allGenerations = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'legendary', 'eeveelution', 'paradox', 'starters', 'zmoves', 'gigantamax', 'tera', 'regional', 'mega', 'games', 'fanmade', 'ultimate'];
+        const allGenerations = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'legendary', 'eeveelution', 'paradox', 'starters', 'zmoves', 'gigantamax', 'tera', 'regional', 'mega', 'games', 'ultimate'];
         generation = allGenerations[Math.floor(Math.random() * allGenerations.length)];
         console.log('Random mode selected:', generation);
     }
@@ -2559,7 +2524,6 @@ function triggerWheelMode(generation) {
     isRegionalMode = (generation === 'regional');
     isMegaMode = (generation === 'mega');
     isGamesMode = (generation === 'games');
-    isFanmadeMode = (generation === 'fanmade');
     isUltimateMode = (generation === 'ultimate');
 
     // Reuse switch for subtitle
@@ -2584,7 +2548,6 @@ function triggerWheelMode(generation) {
         case 'regional': subtitle = 'Regional Variants'; pokemonLimit=0; break;
         case 'mega': subtitle = 'Mega Evolutions'; pokemonLimit=0; break;
         case 'games': subtitle = 'Pokémon Games'; pokemonLimit=0; break;
-        case 'fanmade': subtitle = 'Fan-Made Pokémon'; pokemonLimit=0; break;
         case 'ultimate': subtitle = 'ULTIMATE WHEEL - All Pokémon!'; pokemonLimit=0; break;
     }
     selectedGeneration = subtitle;
@@ -2855,41 +2818,6 @@ async function fetchAllPokemon() {
                 shinySprite: p.sprites.other['official-artwork'].front_shiny || p.sprites.front_shiny,
                 types: p.types.map(t => t.type.name)
             }));
-            
-        } else if (isFanmadeMode) {
-            console.log(`Loading ${fanmadePokemon.length} Fan-Made Pokémon...`);
-            
-            // Fan-made Pokémon don't need API calls, just use the local array
-            pokemon = fanmadePokemon.map((fanmon, index) => {
-                // Create SVG images for fan-made Pokémon
-                const typeColors = {
-                    'Fire': '#ff6b35', 'Water': '#004e89', 'Grass': '#00b894',
-                    'Electric': '#ffd700', 'Ice': '#1e90ff', 'Fighting': '#d4441e',
-                    'Poison': '#c71585', 'Ground': '#8b7500', 'Flying': '#87ceeb',
-                    'Psychic': '#ff69b4', 'Bug': '#6b8e23', 'Rock': '#708090',
-                    'Ghost': '#483d8b', 'Dragon': '#ff1493', 'Dark': '#2f4f4f',
-                    'Steel': '#a9a9a9', 'Fairy': '#ffb7c5'
-                };
-                const types = fanmon.type.split('/').map(t => t.trim());
-                const bgColor = typeColors[types[0]] || '#999999';
-                
-                const spriteUrl = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:${encodeURIComponent(bgColor)};stop-opacity:0.3' /%3E%3Cstop offset='100%25' style='stop-color:${encodeURIComponent(bgColor)};stop-opacity:0.8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='${encodeURIComponent(bgColor)}' width='200' height='200'/%3E%3Crect fill='url(%23grad)' width='200' height='200'/%3E%3Ctext x='100' y='80' font-size='32' font-weight='bold' text-anchor='middle' fill='white'%3E🎨%3C/text%3E%3Ctext x='100' y='130' font-size='16' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3E${encodeURIComponent(fanmon.name)}%3C/text%3E%3Ctext x='100' y='155' font-size='12' text-anchor='middle' fill='white' font-family='Arial'%3E${encodeURIComponent(fanmon.type)}%3C/text%3E%3C/svg%3E`;
-                
-                const shinyUrl = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3ClinearGradient id='grad2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23ffd700;stop-opacity:0.4' /%3E%3Cstop offset='100%25' style='stop-color:%23ffed4e;stop-opacity:0.9' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='%23fff9e6' width='200' height='200'/%3E%3Crect fill='url(%23grad2)' width='200' height='200'/%3E%3Ctext x='100' y='80' font-size='32' font-weight='bold' text-anchor='middle' fill='%23ff6b00'%3E✨%3C/text%3E%3Ctext x='100' y='130' font-size='16' font-weight='bold' text-anchor='middle' fill='%23ff6b00' font-family='Arial'%3E${encodeURIComponent(fanmon.name)}%3C/text%3E%3Ctext x='100' y='155' font-size='12' text-anchor='middle' fill='%23ff6b00' font-family='Arial'%3E${encodeURIComponent(fanmon.type)}%3C/text%3E%3C/svg%3E`;
-                
-                return {
-                    name: fanmon.name,
-                    id: fanmon.id,
-                    type: fanmon.type,
-                    generation: fanmon.gen,
-                    creator: fanmon.creator,
-                    sprite: spriteUrl,
-                    shinySprite: shinyUrl,
-                    types: types
-                };
-            });
-            
-            console.log(`Loaded ${pokemon.length} Fan-Made Pokémon`);
             
         } else if (isUltimateMode) {
             console.log('Fetching ULTIMATE WHEEL - ALL Pokémon, Z-Moves, and Games combined!');

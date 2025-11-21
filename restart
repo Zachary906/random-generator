@@ -1,0 +1,13 @@
+#!/bin/bash
+# Restart the HTTP server on port 3000
+
+echo "Stopping any existing HTTP servers..."
+pkill -f "python3 -m http.server" 2>/dev/null || true
+sleep 1
+
+echo "Starting fresh HTTP server on port 3000..."
+cd /workspaces/random-generator
+python3 -m http.server 3000 --bind 0.0.0.0 > /dev/null 2>&1 &
+
+echo "✅ Server restarted successfully on port 3000"
+echo "Access at: https://special-train-*.app.github.dev:3000/"

@@ -3132,11 +3132,33 @@ async function initializeRegionDropdownList() {
                 </div>
             `).join('');
             
-            // Add event listeners to checkboxes
+            // Add event listeners to checkboxes and labels
             list.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.onchange = function() {
+                checkbox.addEventListener('change', function() {
                     this.parentElement.classList.toggle('checked', this.checked);
-                };
+                });
+            });
+            
+            // Make labels clickable
+            list.querySelectorAll('label').forEach(label => {
+                label.addEventListener('click', function(e) {
+                    const checkbox = this.previousElementSibling;
+                    if (checkbox && checkbox.tagName === 'INPUT') {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            });
+            
+            // Make entire item clickable
+            list.querySelectorAll('.region-pokemon-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
             });
             
             regionDiv.appendChild(header);
@@ -4195,19 +4217,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const value = e.target.value.trim().toLowerCase();
             const listViewContainer = document.getElementById('listViewContainer');
             const wheelViewContainer = document.getElementById('wheelViewContainer');
+            const checklistScreen = document.getElementById('checklistScreen');
+            const mainScreen = document.getElementById('mainScreen');
             
             if (value === 'list') {
-                // Show list view
-                listViewContainer.style.display = 'block';
-                wheelViewContainer.style.display = 'none';
+                // Show checklist screen instead of inline list
+                mainScreen.style.display = 'none';
+                checklistScreen.style.display = 'flex';
                 
-                // Initialize region dropdowns if not already done
-                const regionDropdowns = document.getElementById('regionDropdowns');
-                if (regionDropdowns.innerHTML === '') {
-                    initializeRegionDropdownList();
+                // Initialize checklist if not already done
+                const checklistContainer = document.getElementById('checklistContainer');
+                if (checklistContainer && checklistContainer.children.length === 0) {
+                    populateChecklist('all');
                 }
             } else {
-                // Show wheel view
+                // Show main wheel view
+                checklistScreen.style.display = 'none';
+                mainScreen.style.display = 'flex';
                 listViewContainer.style.display = 'none';
                 wheelViewContainer.style.display = 'block';
             }

@@ -3680,6 +3680,10 @@ window.searchTMs = searchTMs;
 window.showTMDetail = showTMDetail;
 
 function triggerWheelMode(generation) {
+    console.log('=== triggerWheelMode START ===');
+    console.log('Generation:', generation);
+    console.log('selectionScreen element:', selectionScreen);
+    console.log('mainScreen element:', mainScreen);
     document.title = 'triggerWheelMode: ' + generation;
     
     // Handle random mode - pick a random generation
@@ -3728,18 +3732,34 @@ function triggerWheelMode(generation) {
         case 'ultimate': subtitle = 'ULTIMATE WHEEL - All Pokémon!'; pokemonLimit=0; break;
     }
     selectedGeneration = subtitle;
+    console.log('About to hide selectionScreen and show mainScreen');
+    console.log('selectionScreen.style.display will be set to: none');
+    console.log('mainScreen.style.display will be set to: flex');
     selectionScreen.style.display = 'none';
     mainScreen.style.display = 'flex';
+    console.log('Screen visibility changed');
     const subEl = document.querySelector('.subtitle');
     if (subEl) subEl.textContent = subtitle;
+    console.log('About to initializeWheel()');
     initializeWheel();
+    console.log('=== triggerWheelMode END ===');
 }
 window.triggerWheelMode = triggerWheelMode;
 
 // Alias for HTML onclick handlers
 window.openWheelGen = function(gen) {
+    console.log('🎲 openWheelGen called with:', gen);
+    console.log('selectionScreen:', selectionScreen ? 'found' : 'NOT FOUND');
+    console.log('mainScreen:', mainScreen ? 'found' : 'NOT FOUND');
     dbg('🎲 Opening generation: ' + gen);
-    triggerWheelMode(gen);
+    
+    try {
+        triggerWheelMode(gen);
+        console.log('✅ triggerWheelMode succeeded');
+    } catch(e) {
+        console.error('❌ triggerWheelMode failed:', e);
+        dbg('❌ Error: ' + e.message);
+    }
 };
 
 // Initialize Pokémon list instead of wheel

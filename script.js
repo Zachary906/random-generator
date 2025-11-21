@@ -2240,19 +2240,29 @@ async function searchItems(query, limitMode = false) {
         // Fetch details for all items to show descriptions
         pokedexResult.innerHTML = '<p class="pokedex-placeholder">Loading item details...</p>';
         const itemDetailsPromises = items.map(i => 
-            fetch(i.url).then(r => r.json()).catch(() => null)
+            fetch(i.url).then(r => r.json()).catch(err => {
+                console.error(`Failed to fetch item ${i.name}:`, err);
+                return null;
+            })
         );
         const itemDetails = await Promise.all(itemDetailsPromises);
         const validItems = itemDetails.filter(i => i !== null);
+        
+        console.log(`Found ${validItems.length} valid items out of ${items.length}`);
+        
+        if (validItems.length === 0) {
+            pokedexResult.innerHTML = '<p class="pokedex-error">Could not load item details. Try again.</p>';
+            return;
+        }
         
         pokedexResult.innerHTML = `
             <div style="max-height: 500px; overflow-y: auto;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
                     ${validItems.map(item => {
-                        const description = item.effect_entries.find(e => e.language.name === 'en')?.short_effect || 
-                                          item.flavor_text_entries.find(e => e.language.name === 'en')?.text?.replace(/\f/g, ' ') || 
+                        const description = item.effect_entries?.find(e => e.language.name === 'en')?.short_effect || 
+                                          item.flavor_text_entries?.find(e => e.language.name === 'en')?.text?.replace(/\f/g, ' ') || 
                                           'No description available';
-                        const sprite = item.sprites.default;
+                        const sprite = item.sprites?.default;
                         
                         return `
                         <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; display: flex; flex-direction: column;" 

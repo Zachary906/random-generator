@@ -212,6 +212,7 @@ let isLegendaryMode = false;
 let isEeveelutionMode = false;
 let isParadoxMode = false;
 let isStarterMode = false;
+let isFossilMode = false;
 let isZMoveMode = false;
 let isGigantamaxMode = false;
 let isTeraMode = false;
@@ -626,6 +627,34 @@ const paradoxInfo = {
     1022: { era: 'Future', basedOn: 'Terrakion' },
     1023: { era: 'Future', basedOn: 'Cobalion' },
 };
+
+// All Fossil Pokémon (revived from fossils across all generations)
+const fossilPokemon = [
+    // Gen 1 - Fossils
+    138, 139, // Omanyte line
+    140, 141, // Kabuto line
+    
+    // Gen 3 - Fossils
+    345, 346, // Lileep line
+    347, 348, // Cradily/Anorith line
+    
+    // Gen 4 - Fossils
+    408, 409, 410, // Cranidos line
+    411, 412, 413, // Shieldon line (Cranidos)
+    
+    // Gen 5 - Fossils
+    564, 565, // Tirtouga line
+    566, 567, // Dracozolt/Arrokuda combos
+    
+    // Gen 8 - Fossils (Galar)
+    880, 881, // Dracozolt (Dragon/Electric)
+    882, 883, // Arctozolt (Electric/Ice)
+    884, 885, // Dracovish (Water/Dragon)
+    886, 887, // Arctovish (Water/Ice)
+    
+    // Gen 9 - Fossils (Paldea - Scarlet/Violet)
+    1003, 1004, // Ancient Pokémon in Paldea region
+];
 
 // List of all Starter Pokémon and their evolutions
 const starterPokemon = [
@@ -2509,7 +2538,7 @@ function triggerWheelMode(generation) {
     
     // Handle random mode - pick a random generation
     if (generation === 'random') {
-        const allGenerations = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'legendary', 'eeveelution', 'paradox', 'starters', 'zmoves', 'gigantamax', 'tera', 'regional', 'mega', 'games', 'ultimate'];
+        const allGenerations = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'legendary', 'eeveelution', 'paradox', 'starters', 'fossil', 'zmoves', 'gigantamax', 'tera', 'regional', 'mega', 'games', 'ultimate'];
         generation = allGenerations[Math.floor(Math.random() * allGenerations.length)];
         console.log('Random mode selected:', generation);
     }
@@ -2518,6 +2547,7 @@ function triggerWheelMode(generation) {
     isEeveelutionMode = (generation === 'eeveelution');
     isParadoxMode = (generation === 'paradox');
     isStarterMode = (generation === 'starters');
+    isFossilMode = (generation === 'fossil');
     isZMoveMode = (generation === 'zmoves');
     isGigantamaxMode = (generation === 'gigantamax');
     isTeraMode = (generation === 'tera');
@@ -2542,6 +2572,7 @@ function triggerWheelMode(generation) {
         case 'eeveelution': subtitle = 'Eeveelutions'; pokemonLimit=0; break;
         case 'paradox': subtitle = 'Paradox Pokémon'; pokemonLimit=0; break;
         case 'starters': subtitle = 'Starter Pokémon & Evolutions'; pokemonLimit=0; break;
+        case 'fossil': subtitle = 'Fossil Pokémon'; pokemonLimit=0; break;
         case 'zmoves': subtitle = 'Z-Moves & Z-Crystals'; pokemonLimit=0; break;
         case 'gigantamax': subtitle = 'Gigantamax Pokémon'; pokemonLimit=0; break;
         case 'tera': subtitle = 'Terastallized Pokémon'; pokemonLimit=0; break;
@@ -2734,6 +2765,24 @@ async function fetchAllPokemon() {
             
             // Fetch each Starter Pokémon individually
             const fetchPromises = starterPokemon.map(id => 
+                fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(res => res.json())
+            );
+            
+            const pokemonData = await Promise.all(fetchPromises);
+            
+            pokemon = pokemonData.map(p => ({
+                name: p.name.charAt(0).toUpperCase() + p.name.slice(1).replace('-', ' '),
+                id: p.id,
+                sprite: p.sprites.other['official-artwork'].front_default || p.sprites.front_default,
+                shinySprite: p.sprites.other['official-artwork'].front_shiny || p.sprites.front_shiny,
+                types: p.types.map(t => t.type.name)
+            }));
+            
+        } else if (isFossilMode) {
+            console.log(`Fetching ${fossilPokemon.length} Fossil Pokémon...`);
+            
+            // Fetch each Fossil Pokémon individually
+            const fetchPromises = fossilPokemon.map(id => 
                 fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(res => res.json())
             );
             

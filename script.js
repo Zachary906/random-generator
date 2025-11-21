@@ -218,7 +218,6 @@ let isTeraMode = false;
 let isRegionalMode = false;
 let isMegaMode = false;
 let isGamesMode = false;
-let isFanmadeMode = false;
 let isUltimateMode = false;
 
 // Pokémon Games list

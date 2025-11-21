@@ -246,6 +246,21 @@
             
             <h1 class="checklist-title">📋 Pokémon List</h1>
             
+            <!-- Advanced Controls -->
+            <div class="advanced-controls">
+                <div class="control-group">
+                    <button class="control-btn" onclick="setFilter('caught', true)" title="Show only caught">✅ Caught</button>
+                    <button class="control-btn" onclick="setFilter('caught', false)" title="Show only uncaught">❌ Uncaught</button>
+                    <button class="control-btn" onclick="clearFilters()" title="Clear all filters">🔄 All</button>
+                </div>
+                <div class="control-group">
+                    <button class="control-btn" onclick="window.undo()" title="Undo last change">↶ Undo</button>
+                    <button class="control-btn" onclick="window.redo()" title="Redo last change">↷ Redo</button>
+                    <button class="control-btn" onclick="window.createManualBackup()" title="Create backup">💾 Backup</button>
+                    <button class="control-btn" onclick="window.displayStats()" title="Show statistics">📊 Stats</button>
+                </div>
+            </div>
+            
             <!-- Region Selector -->
             <div class="region-selector">
                 <button class="region-btn active" data-region="all">All Pokémon</button>

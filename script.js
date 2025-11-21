@@ -4046,25 +4046,341 @@ let checklistData = {};
 let currentUser = 'zach'; // Default user
 let currentRegion = 'all'; // Track current region for switching users
 
+// Advanced tracking system
+let userStats = {}; // Track statistics per user
+let changeHistory = []; // Undo/Redo stack
+let maxHistorySize = 50;
+
+// Data versioning
+const DATA_VERSION = 2;
+const MIN_BACKUP_INTERVAL = 3600000; // 1 hour in milliseconds
+
 // Get localStorage key for current user
 function getStorageKey() {
     return `pokemonChecklist_${currentUser}`;
 }
 
-// Load checklist data from localStorage
+// Get stats key for current user
+function getStatsKey() {
+    return `pokemonStats_${currentUser}`;
+}
+
+// Get backup key for current user
+function getBackupKey(timestamp = 'latest') {
+    return `pokemonBackup_${currentUser}_${timestamp}`;
+}
+
+// Get history key for current user
+function getHistoryKey() {
+    return `pokemonHistory_${currentUser}`;
+}
+
+// Advanced load with validation
 function loadChecklistData() {
     const saved = localStorage.getItem(getStorageKey());
     if (saved) {
-        checklistData = JSON.parse(saved);
+        try {
+            checklistData = JSON.parse(saved);
+            validateData(checklistData);
+        } catch (error) {
+            console.error('Error parsing checklist data:', error);
+            checklistData = {};
+            // Try to restore from backup
+            restoreLatestBackup();
+        }
     } else {
-        checklistData = {}; // Start fresh if no data
+        checklistData = {};
+    }
+    loadStats();
+}
+
+// Advanced save with versioning
+function saveChecklistData() {
+    try {
+        // Create automatic backup if needed
+        createAutoBackup();
+        
+        // Save main data
+        localStorage.setItem(getStorageKey(), JSON.stringify(checklistData));
+        
+        // Save change history
+        saveHistory();
+        
+        // Update stats
+        updateStats();
+        
+    } catch (error) {
+        console.error('Error saving checklist data:', error);
     }
 }
 
-// Save checklist data to localStorage
-function saveChecklistData() {
-    localStorage.setItem(getStorageKey(), JSON.stringify(checklistData));
+// Data validation
+function validateData(data) {
+    if (typeof data !== 'object' || Array.isArray(data)) {
+        throw new Error('Invalid data format');
+    }
+    // Validate each entry is a boolean
+    for (const key in data) {
+        if (typeof data[key] !== 'boolean') {
+            console.warn(`Invalid value for Pokemon ${key}, resetting to false`);
+            data[key] = false;
+        }
+    }
 }
+
+// Change history tracking (Undo/Redo)
+function recordChange(pokemonId, newValue) {
+    const change = {
+        timestamp: Date.now(),
+        pokemonId: pokemonId,
+        oldValue: checklistData[pokemonId] || false,
+        newValue: newValue,
+        user: currentUser
+    };
+    
+    changeHistory.push(change);
+    if (changeHistory.length > maxHistorySize) {
+        changeHistory.shift();
+    }
+    
+    saveHistory();
+}
+
+function undo() {
+    if (changeHistory.length === 0) return false;
+    
+    const lastChange = changeHistory.pop();
+    checklistData[lastChange.pokemonId] = lastChange.oldValue;
+    saveChecklistData();
+    
+    // Refresh UI
+    displayListView(currentRegion);
+    updateListViewStats();
+    
+    return true;
+}
+
+function redo() {
+    if (changeHistory.length === 0) return false;
+    
+    const nextChange = changeHistory.pop();
+    checklistData[nextChange.pokemonId] = nextChange.newValue;
+    saveChecklistData();
+    
+    // Refresh UI
+    displayListView(currentRegion);
+    updateListViewStats();
+    
+    return true;
+}
+
+// Statistics system
+function loadStats() {
+    const saved = localStorage.getItem(getStatsKey());
+    if (saved) {
+        try {
+            userStats = JSON.parse(saved);
+        } catch (e) {
+            userStats = initializeStats();
+        }
+    } else {
+        userStats = initializeStats();
+    }
+}
+
+function initializeStats() {
+    return {
+        totalCaught: 0,
+        totalPokemon: 1025,
+        completionPercent: 0,
+        lastUpdated: Date.now(),
+        caughtByGeneration: {},
+        caughtByType: {},
+        sessionStartTime: Date.now(),
+        checksToday: 0
+    };
+}
+
+function updateStats() {
+    userStats.totalCaught = Object.values(checklistData).filter(v => v).length;
+    userStats.completionPercent = Math.round((userStats.totalCaught / userStats.totalPokemon) * 100);
+    userStats.lastUpdated = Date.now();
+    userStats.checksToday = (userStats.checksToday || 0) + 1;
+    
+    localStorage.setItem(getStatsKey(), JSON.stringify(userStats));
+}
+
+// Backup system
+function createAutoBackup() {
+    const lastBackupKey = getBackupKey('timestamp');
+    const lastBackupTime = localStorage.getItem(lastBackupKey);
+    const now = Date.now();
+    
+    if (!lastBackupTime || (now - parseInt(lastBackupTime)) > MIN_BACKUP_INTERVAL) {
+        createManualBackup();
+        localStorage.setItem(lastBackupKey, now.toString());
+    }
+}
+
+function createManualBackup() {
+    const timestamp = Date.now();
+    const backupKey = getBackupKey(timestamp);
+    const backupData = {
+        data: checklistData,
+        stats: userStats,
+        timestamp: timestamp,
+        version: DATA_VERSION
+    };
+    
+    try {
+        localStorage.setItem(backupKey, JSON.stringify(backupData));
+        // Keep only last 5 backups
+        pruneOldBackups();
+    } catch (error) {
+        console.error('Error creating backup:', error);
+    }
+}
+
+function pruneOldBackups() {
+    const backupPrefix = `pokemonBackup_${currentUser}_`;
+    const backups = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(backupPrefix) && key !== getBackupKey('timestamp')) {
+            backups.push(key);
+        }
+    }
+    
+    // Sort and keep only last 5
+    backups.sort();
+    while (backups.length > 5) {
+        localStorage.removeItem(backups.shift());
+    }
+}
+
+function restoreLatestBackup() {
+    const backupPrefix = `pokemonBackup_${currentUser}_`;
+    let latestBackup = null;
+    let latestTimestamp = 0;
+    
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(backupPrefix) && key !== getBackupKey('timestamp')) {
+            const timestamp = parseInt(key.split('_').pop());
+            if (timestamp > latestTimestamp) {
+                latestTimestamp = timestamp;
+                latestBackup = key;
+            }
+        }
+    }
+    
+    if (latestBackup) {
+        try {
+            const backup = JSON.parse(localStorage.getItem(latestBackup));
+            checklistData = backup.data || {};
+            userStats = backup.stats || initializeStats();
+            console.log('Restored from backup:', new Date(latestTimestamp).toLocaleString());
+        } catch (error) {
+            console.error('Error restoring backup:', error);
+        }
+    }
+}
+
+// Change history persistence
+function saveHistory() {
+    try {
+        localStorage.setItem(getHistoryKey(), JSON.stringify(changeHistory));
+    } catch (error) {
+        console.error('Error saving history:', error);
+    }
+}
+
+function loadHistory() {
+    try {
+        const saved = localStorage.getItem(getHistoryKey());
+        if (saved) {
+            changeHistory = JSON.parse(saved);
+        }
+    } catch (error) {
+        console.error('Error loading history:', error);
+        changeHistory = [];
+    }
+}
+
+// Export/Import system
+function exportUserData() {
+    const exportData = {
+        version: DATA_VERSION,
+        user: currentUser,
+        timestamp: Date.now(),
+        checklist: checklistData,
+        stats: userStats,
+        history: changeHistory
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pokemon_checklist_${currentUser}_${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+function importUserData(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Validate imported data
+                if (importedData.version !== DATA_VERSION) {
+                    console.warn('Data version mismatch, attempting conversion');
+                }
+                
+                if (importedData.user !== currentUser) {
+                    throw new Error('Cannot import data from different user');
+                }
+                
+                // Create backup before importing
+                createManualBackup();
+                
+                // Restore imported data
+                checklistData = importedData.checklist;
+                userStats = importedData.stats;
+                changeHistory = importedData.history || [];
+                
+                saveChecklistData();
+                resolve(true);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+    });
+}
+
+// Sync between tabs
+function setupCrossTabSync() {
+    window.addEventListener('storage', (e) => {
+        if (e.key === getStorageKey() && e.newValue) {
+            console.log('Data synced from another tab');
+            loadChecklistData();
+            displayListView(currentRegion);
+            updateListViewStats();
+        }
+    });
+}
+
+window.exportUserData = exportUserData;
+window.importUserData = importUserData;
+window.undo = undo;
+window.redo = redo;
+window.createManualBackup = createManualBackup;
 
 // Get current region
 function getCurrentRegion() {
@@ -4084,14 +4400,112 @@ function switchUser(user) {
         btn.classList.toggle('active', btn.dataset.user === user);
     });
     
-    // Load new user's data
+    // Load new user's data with history
     loadChecklistData();
+    loadHistory();
     
     // Refresh the display
     displayListView(currentRegion);
     updateListViewStats();
 }
 window.switchUser = switchUser;
+
+// Advanced filtering system
+let activeFilters = {
+    caught: null,        // null = all, true = only caught, false = only uncaught
+    type: null,          // Filter by Pokémon type
+    generation: null,    // Filter by generation
+    searchTerm: ''       // Search by name
+};
+
+function setFilter(filterType, value) {
+    activeFilters[filterType] = value;
+    displayListView(currentRegion);
+}
+
+function clearFilters() {
+    activeFilters = {
+        caught: null,
+        type: null,
+        generation: null,
+        searchTerm: ''
+    };
+    displayListView(currentRegion);
+}
+
+function applyFilters(pokemonList) {
+    let filtered = pokemonList;
+    
+    // Filter by catch status
+    if (activeFilters.caught !== null) {
+        filtered = filtered.filter(p => {
+            const isCaught = checklistData[p.id] || false;
+            return isCaught === activeFilters.caught;
+        });
+    }
+    
+    // Filter by search term
+    if (activeFilters.searchTerm) {
+        const term = activeFilters.searchTerm.toLowerCase();
+        filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(term) || p.id.toString().includes(term)
+        );
+    }
+    
+    return filtered;
+}
+
+// Statistics reporting
+function generateReport() {
+    const totalCaught = Object.values(checklistData).filter(v => v).length;
+    const totalPokemon = userStats.totalPokemon;
+    const percent = Math.round((totalCaught / totalPokemon) * 100);
+    
+    return {
+        user: currentUser,
+        totalCaught: totalCaught,
+        totalPokemon: totalPokemon,
+        completionPercent: percent,
+        lastUpdated: new Date(userStats.lastUpdated).toLocaleString(),
+        checksToday: userStats.checksToday,
+        compareWithOther: compareUserProgress()
+    };
+}
+
+function compareUserProgress() {
+    const users = ['zach', 'payten'];
+    const comparison = {};
+    
+    users.forEach(user => {
+        const statKey = `pokemonStats_${user}`;
+        const saved = localStorage.getItem(statKey);
+        if (saved) {
+            const stats = JSON.parse(saved);
+            comparison[user] = {
+                caught: stats.totalCaught || 0,
+                percent: stats.completionPercent || 0
+            };
+        }
+    });
+    
+    return comparison;
+}
+
+function displayStats() {
+    const report = generateReport();
+    console.log('=== Pokémon Collection Report ===');
+    console.log(`User: ${report.user}`);
+    console.log(`Caught: ${report.totalCaught}/${report.totalPokemon} (${report.completionPercent}%)`);
+    console.log(`Last Updated: ${report.lastUpdated}`);
+    console.log(`Checks Today: ${report.checksToday}`);
+    console.log('User Comparison:', report.compareWithOther);
+    return report;
+}
+
+window.setFilter = setFilter;
+window.clearFilters = clearFilters;
+window.generateReport = generateReport;
+window.displayStats = displayStats;
 
 // Open checklist screen
 async function openChecklistScreen() {
@@ -4235,11 +4649,18 @@ function handleRegionClick(e) {
 
 function handleCheckboxChange(e) {
     const pokemonId = parseInt(e.target.dataset.pokemonId);
-    checklistData[pokemonId] = e.target.checked;
+    const oldValue = checklistData[pokemonId] || false;
+    const newValue = e.target.checked;
+    
+    // Record change for undo/redo
+    recordChange(pokemonId, newValue);
+    
+    // Update data
+    checklistData[pokemonId] = newValue;
     saveChecklistData();
     
     // Update item styling
-    e.target.parentElement.classList.toggle('checked', e.target.checked);
+    e.target.parentElement.classList.toggle('checked', newValue);
     updateChecklistStats();
 }
 
@@ -4273,6 +4694,8 @@ window.backToSelection = backToSelection;
 
 // Initialize checklist data on load
 loadChecklistData();
+loadHistory();
+setupCrossTabSync();
 
 // Initialize command input listener
 document.addEventListener('DOMContentLoaded', function() {

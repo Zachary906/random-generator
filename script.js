@@ -2967,7 +2967,7 @@ function triggerWheelMode(generation) {
     mainScreen.style.display = 'flex';
     const subEl = document.querySelector('.subtitle');
     if (subEl) subEl.textContent = subtitle;
-    initializePokemonList();
+    initializeWheel();
 }
 window.triggerWheelMode = triggerWheelMode;
 

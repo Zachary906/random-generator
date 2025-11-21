@@ -227,23 +227,15 @@
     <div id="mainScreen" class="main-screen" style="display: none;">
     <div class="container">
         <button id="backBtn" class="back-button" onclick="if(window.backToSelection){window.backToSelection()}">← Change Wheel</button>
-        <h1>Pokémon List</h1>
+        <h1>Pokémon Wheel Spinner</h1>
         <p class="subtitle">Original 151 Pokémon</p>
-        
-        <!-- Command Input -->
-        <div class="command-input-container">
-            <input type="text" id="commandInput" class="command-input" placeholder="Type 'list' to view Pokémon by region..." autocomplete="off">
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheelCanvas"></canvas>
+            <div class="click-instruction">Click the Pokéball to spin!</div>
         </div>
-        
-        <!-- List View (Hidden by default, shows when "list" is typed) -->
-        <div id="listViewContainer" class="list-view-container" style="display: none;">
-            <div id="regionDropdowns" class="region-dropdowns"></div>
+        <div class="controls">
             <div id="loading" class="loading">Loading Pokémon data...</div>
-        </div>
-        
-        <!-- Wheel View (Default) -->
-        <div id="wheelViewContainer" class="list-container">
-            <div id="pokemonListView" class="pokemon-list-view"></div>
         </div>
     </div>
     </div>

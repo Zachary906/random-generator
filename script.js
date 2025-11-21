@@ -2967,9 +2967,105 @@ function triggerWheelMode(generation) {
     mainScreen.style.display = 'flex';
     const subEl = document.querySelector('.subtitle');
     if (subEl) subEl.textContent = subtitle;
-    initializeWheel();
+    initializePokemonList();
 }
 window.triggerWheelMode = triggerWheelMode;
+
+// Initialize Pokémon list instead of wheel
+async function initializePokemonList() {
+    const container = document.getElementById('pokemonListView');
+    const loading = document.getElementById('loading');
+    
+    container.innerHTML = '';
+    loading.style.display = 'block';
+    
+    let pokemonList = [];
+    
+    try {
+        // Fetch Pokémon based on current mode
+        if (isLegendaryMode) {
+            pokemonList = legendaryAndMythical;
+        } else if (isEeveelutionMode) {
+            pokemonList = eeveelutions;
+        } else if (isParadoxMode) {
+            pokemonList = paradoxPokemon;
+        } else if (isStarterMode) {
+            pokemonList = starterPokemon;
+        } else if (isFossilMode) {
+            pokemonList = fossilPokemon;
+        } else if (isZMoveMode) {
+            // Fetch Z-Move list
+            const response = await fetch('https://pokeapi.co/api/v2/item-category/33');
+            const data = await response.json();
+            pokemonList = data.items.map((item, idx) => idx + 1);
+        } else if (isGigantamaxMode) {
+            // Placeholder for Gigantamax (would need specific IDs)
+            pokemonList = [1, 3, 6, 9, 25, 39, 58, 74, 92, 104, 109, 133, 147, 152, 155, 158];
+        } else if (isTeraMode) {
+            // All Pokémon can Terastallize, fetch up to 1025
+            for (let i = 1; i <= 1025; i++) pokemonList.push(i);
+        } else if (isRegionalMode) {
+            // Regional variants - specific IDs
+            pokemonList = [25, 26, 27, 28, 37, 38, 50, 51, 52, 53, 74, 75, 76, 88, 89, 103, 104, 105, 106, 107, 150, 151];
+        } else if (isMegaMode) {
+            // Mega Evolution capable Pokémon
+            pokemonList = [3, 6, 9, 65, 94, 130, 142, 149, 150, 151, 248, 384, 445, 384, 493];
+        } else if (isGamesMode) {
+            // Games - use game list instead
+            pokemonList = Array.from({length: pokemonGames.length}, (_, i) => i + 1);
+        } else if (isUltimateMode) {
+            // All Pokémon
+            for (let i = 1; i <= 1025; i++) pokemonList.push(i);
+        } else {
+            // Regular generations
+            const start = pokemonOffset + 1;
+            const end = pokemonOffset + pokemonLimit;
+            for (let i = start; i <= end; i++) {
+                pokemonList.push(i);
+            }
+        }
+        
+        // Fetch Pokémon details from API
+        const pokemonDetails = [];
+        for (const id of pokemonList) {
+            try {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    pokemonDetails.push({
+                        id: data.id,
+                        name: data.name
+                    });
+                }
+            } catch (e) {
+                console.error(`Failed to fetch Pokémon ${id}`);
+            }
+        }
+        
+        // Render list
+        container.innerHTML = pokemonDetails.map(p => `
+            <div class="pokemon-list-item" onclick="this.querySelector('input[type=checkbox]').checked = !this.querySelector('input[type=checkbox]').checked; handleListItemCheck(this);">
+                <input type="checkbox" data-pokemon-id="${p.id}" onchange="handleListItemCheck(this.parentElement)">
+                <label>
+                    <span class="pokemon-id">#${String(p.id).padStart(4, '0')}</span>
+                    <span>${p.name.charAt(0).toUpperCase() + p.name.slice(1).replace('-', ' ')}</span>
+                </label>
+            </div>
+        `).join('');
+        
+        loading.style.display = 'none';
+    } catch (error) {
+        console.error('Error loading Pokémon list:', error);
+        container.innerHTML = '<p style="color: red; text-align: center;">Error loading Pokémon. Please try again.</p>';
+        loading.style.display = 'none';
+    }
+}
+
+// Handle list item checkbox changes
+function handleListItemCheck(element) {
+    const checkbox = element.querySelector('input[type="checkbox"]');
+    element.classList.toggle('checked', checkbox.checked);
+}
 
 // Back button functionality
 function backToSelection() {

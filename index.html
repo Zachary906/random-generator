@@ -227,14 +227,10 @@
     <div id="mainScreen" class="main-screen" style="display: none;">
     <div class="container">
         <button id="backBtn" class="back-button" onclick="if(window.backToSelection){window.backToSelection()}">← Change Wheel</button>
-        <h1>Pokémon Wheel Spinner</h1>
+        <h1>Pokémon List</h1>
         <p class="subtitle">Original 151 Pokémon</p>
-        <div class="wheel-container">
-            <div class="pointer"></div>
-            <canvas id="wheelCanvas"></canvas>
-            <div class="click-instruction">Click the Pokéball to spin!</div>
-        </div>
-        <div class="controls">
+        <div class="list-container">
+            <div id="pokemonListView" class="pokemon-list-view"></div>
             <div id="loading" class="loading">Loading Pokémon data...</div>
         </div>
     </div>

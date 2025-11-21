@@ -4299,19 +4299,31 @@ document.addEventListener('keydown', function(e) {
 
 // Open list view screen
 async function openListView() {
+    console.log('openListView called!');
+    console.log('Setting display to none for:', 'selectionScreen', 'mainScreen', 'checklistScreen');
     document.getElementById('selectionScreen').style.display = 'none';
     document.getElementById('mainScreen').style.display = 'none';
     document.getElementById('checklistScreen').style.display = 'none';
+    console.log('Setting listScreen display to block');
     document.getElementById('listScreen').style.display = 'block';
+    console.log('Calling displayListView...');
     await displayListView('all');
+    console.log('Calling setupListViewEventListeners...');
     setupListViewEventListeners();
+    console.log('openListView complete!');
 }
 window.openListView = openListView;
 
 // Display Pokémon list
 async function displayListView(region) {
+    console.log('displayListView called with region:', region);
     const container = document.getElementById('listContainer');
+    if (!container) {
+        console.error('listContainer not found!');
+        return;
+    }
     container.innerHTML = '<p style="text-align: center; color: #999;">Loading Pokémon...</p>';
+    console.log('Container innerHTML set to loading message');
     
     let pokemonList = [];
     
@@ -4365,15 +4377,21 @@ async function displayListView(region) {
 
 // Setup list view event listeners
 function setupListViewEventListeners() {
+    console.log('setupListViewEventListeners called');
     // Back button
     const backBtn = document.getElementById('listBackBtn');
     if (backBtn) {
+        console.log('Found listBackBtn, adding listener');
         backBtn.removeEventListener('click', backToSelectionFromListView);
         backBtn.addEventListener('click', backToSelectionFromListView);
+    } else {
+        console.log('listBackBtn not found!');
     }
     
     // Region buttons
-    document.querySelectorAll('#listScreen .region-btn').forEach(btn => {
+    const regionBtns = document.querySelectorAll('#listScreen .region-btn');
+    console.log('Found region buttons:', regionBtns.length);
+    regionBtns.forEach(btn => {
         btn.removeEventListener('click', handleListViewRegionClick);
         btn.addEventListener('click', handleListViewRegionClick);
     });

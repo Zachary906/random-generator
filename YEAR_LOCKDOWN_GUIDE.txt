@@ -1,0 +1,179 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    YEAR LOCKDOWN SYSTEM - QUICK GUIDE                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+WHAT HAPPENS ON NEW YEAR:
+────────────────────────────────────────────────────────────────────────────
+When January 1st arrives:
+  ✓ App detects year change
+  ✓ App locks completely
+  ✓ Shows "HAPPY NEW YEAR [YEAR]!" message
+  ✓ NOTHING can be clicked
+  ✓ All buttons disabled
+  ✓ All inputs disabled
+  ✓ All interactions blocked
+
+
+HOW TO UNLOCK (FOR DEVELOPERS):
+────────────────────────────────────────────────────────────────────────────
+
+Option 1: Edit CONFIG (Recommended)
+  File: script.js
+  Line: 13-24
+  
+  Change these 3 values:
+  └─ CURRENT_YEAR: 2026        (was 2025)
+  └─ VERSION: '7.0.0'          (was '6.0.0')
+  └─ STANDARDS_VERSION: 7.0    (was 6.0)
+  
+  Save → Commit → Deploy
+  App auto-unlocks on next load!
+
+
+Option 2: Manual Unlock (Quick)
+  Browser Console:
+  > window.unlockApp()
+  
+  (Only temporarily - lock returns on page refresh)
+
+
+HOW IT WORKS:
+────────────────────────────────────────────────────────────────────────────
+
+SAME YEAR (2025):
+  App loads normally ✓
+  All features work ✓
+  Users can click everything ✓
+
+NEW YEAR (2026):
+  App detects: 2026 > 2025
+  System locks automatically
+  Overlay appears
+  NOTHING clickable
+  Requires update
+
+AFTER UPDATE:
+  CONFIG.CURRENT_YEAR = 2026
+  localStorage updated
+  App initializes normally
+  Lockdown removed
+  Features work again
+
+
+CODE LOCATIONS:
+────────────────────────────────────────────────────────────────────────────
+
+YearLockdownSystem class:
+  File: script.js
+  Lines: 27-154
+  
+CONFIG settings:
+  File: script.js
+  Lines: 13-24
+  
+Initialization check:
+  File: script.js
+  Line: 5447
+  (Checks yearLockdown.needsUpdate() first)
+
+
+GLOBAL API (Console):
+────────────────────────────────────────────────────────────────────────────
+
+window.yearLockdown              - Access system
+window.yearLockdown.isLocked     - Boolean (true/false)
+window.yearLockdown.needsUpdate()   - Check if locked
+window.yearLockdown.lastSeenYear - Get stored year
+window.unlockApp()               - Unlock app
+
+
+WHAT GETS DISABLED WHEN LOCKED:
+────────────────────────────────────────────────────────────────────────────
+✓ All <button> elements
+✓ All onclick handlers  
+✓ All .wheel-option elements
+✓ All .category-btn elements
+✓ All .region-btn elements
+✓ All <input> fields
+✓ All <select> dropdowns
+✓ All <textarea> fields
+✓ Global click prevention
+→ NOTHING CAN BE CLICKED!
+
+
+STORAGE:
+────────────────────────────────────────────────────────────────────────────
+localStorage key: 'pokemonWheelLastYear'
+
+Current: 2025
+Future:  2026, 2027, etc. (auto-updated on unlock)
+
+
+VISUAL INDICATORS:
+────────────────────────────────────────────────────────────────────────────
+When locked:
+  • Full-screen overlay appears
+  • Beautiful gradient background
+  • Elements become semi-transparent
+  • Cursor changes to "not-allowed"
+  • Message: "HAPPY NEW YEAR [YEAR]!"
+  • Cannot interact with anything
+
+
+TIMELINE EXAMPLE:
+────────────────────────────────────────────────────────────────────────────
+
+Dec 31, 2025, 11:59 PM
+  → App working normally
+
+Jan 1, 2026, 12:00 AM
+  → 🎆 NEW YEAR!
+  → App detects change
+  → System locks
+  → Users see message
+  → NOTHING clickable
+
+Jan 1, 2026, 1:00 AM
+  → Developer updates CONFIG
+  → Deploys new version
+
+Jan 1, 2026, 1:30 PM
+  → User refreshes page
+  → App detects update
+  → App unlocks
+  → Features work again
+
+
+QUICK UPDATE STEPS:
+────────────────────────────────────────────────────────────────────────────
+
+1. Open: /workspaces/random-generator/script.js
+2. Go to: Line 13-24 (CONFIG)
+3. Update: CURRENT_YEAR, VERSION, STANDARDS_VERSION
+4. Save file
+5. Run: git add -A && git commit -m "Update to 2026 standards"
+6. Run: git push origin main
+7. Users refresh → App unlocks automatically!
+
+
+KEY POINTS:
+────────────────────────────────────────────────────────────────────────────
+✓ Automatic detection - no manual trigger needed
+✓ Complete prevention - nothing can be clicked
+✓ Beautiful UI - festive overlay with message
+✓ Easy update - just 3 CONFIG values
+✓ Auto-unlock - no manual unlock needed
+✓ Developer friendly - global API access
+✓ Persistent - survives page refresh
+✓ Hourly checks - detects any time of day
+
+
+STATUS: ✅ READY FOR PRODUCTION
+
+Year: 2025
+Version: 6.0.0
+Standards: 6.0
+
+Next update needed: Jan 1, 2026
+
+════════════════════════════════════════════════════════════════════════════

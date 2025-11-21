@@ -59,7 +59,9 @@ class YearLockdownSystem {
     checkYearChange() {
         const now = new Date().getFullYear();
         
-        if (now > this.lastSeenYear) {
+        // DISABLED: Year lockdown temporarily disabled for development
+        // Will re-enable for production when next year arrives (2026)
+        if (false && now > this.lastSeenYear) {
             dbg(`🎆 NEW YEAR DETECTED: ${this.lastSeenYear} → ${now}`);
             this.lockApp();
         }

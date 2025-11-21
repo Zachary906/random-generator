@@ -3736,6 +3736,12 @@ function triggerWheelMode(generation) {
 }
 window.triggerWheelMode = triggerWheelMode;
 
+// Alias for HTML onclick handlers
+window.openWheelGen = function(gen) {
+    dbg('🎲 Opening generation: ' + gen);
+    triggerWheelMode(gen);
+};
+
 // Initialize Pokémon list instead of wheel
 async function initializePokemonList() {
     const container = document.getElementById('pokemonListView');

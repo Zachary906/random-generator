@@ -19,11 +19,203 @@ const CONFIG = Object.freeze({
     DEBUG_MAX_MESSAGES: 100,
     REQUEST_TIMEOUT: 10000,
     PERFORMANCE_TRACKING: true,
+    CURRENT_YEAR: 2025,              // ← Update this annually
+    STANDARDS_VERSION: 6.0,           // ← Update this with new standards
 });
 
 // ============================================================================
-// INITIALIZATION & SETUP
+// YEAR LOCKDOWN SYSTEM - Enforces Annual Standards Updates
 // ============================================================================
+
+/**
+ * Year lockdown system ensures app is updated to current year standards
+ * Automatically triggered when a new year begins
+ */
+class YearLockdownSystem {
+    constructor() {
+        this.isLocked = false;
+        this.currentYear = new Date().getFullYear();
+        this.lastSeenYear = this.getLastSeenYear();
+        this.init();
+    }
+
+    init() {
+        this.checkYearChange();
+        // Check every hour if year has changed
+        setInterval(() => this.checkYearChange(), 3600000);
+    }
+
+    /**
+     * Get last recorded year from localStorage
+     */
+    getLastSeenYear() {
+        const stored = localStorage.getItem('pokemonWheelLastYear');
+        return stored ? parseInt(stored) : CONFIG.CURRENT_YEAR;
+    }
+
+    /**
+     * Check if new year has arrived
+     */
+    checkYearChange() {
+        const now = new Date().getFullYear();
+        
+        if (now > this.lastSeenYear) {
+            dbg(`🎆 NEW YEAR DETECTED: ${this.lastSeenYear} → ${now}`);
+            this.lockApp();
+        }
+    }
+
+    /**
+     * Lock the application until updated
+     */
+    lockApp() {
+        this.isLocked = true;
+        this.lastSeenYear = this.currentYear;
+        localStorage.setItem('pokemonWheelLastYear', this.currentYear);
+        
+        // Display lockdown overlay
+        this.showLockdownOverlay();
+        
+        // Prevent all interactions
+        this.disableAllInteractions();
+        
+        dbg('🔒 Application locked - Year update required');
+    }
+
+    /**
+     * Show lockdown overlay with message
+     */
+    showLockdownOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'yearLockdownOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            backdrop-filter: blur(5px);
+        `;
+
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: linear-gradient(135deg, #f5576c 0%, #ff8c94 100%);
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 3px solid #ff1493;
+        `;
+
+        content.innerHTML = `
+            <div style="font-size: 80px; margin-bottom: 20px;">🎆</div>
+            <h1 style="color: white; font-size: 48px; margin-bottom: 20px; font-weight: bold;">
+                HAPPY NEW YEAR ${this.currentYear}!
+            </h1>
+            <p style="color: rgba(255,255,255,0.9); font-size: 24px; margin-bottom: 30px; line-height: 1.6;">
+                This app requires an update to meet <strong>${this.currentYear} standards</strong>.
+            </p>
+            <div style="background: rgba(0,0,0,0.3); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+                <p style="color: white; font-size: 18px; margin: 0;">
+                    ⚠️ <strong>Application is temporarily locked</strong>
+                </p>
+                <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 15px 0 0 0;">
+                    All features are disabled until the code is updated.
+                </p>
+            </div>
+            <p style="color: rgba(255,255,255,0.85); font-size: 16px; margin: 0;">
+                🔧 The development team will update the standards soon.
+                <br><br>
+                Please check back later!
+            </p>
+            <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid rgba(255,255,255,0.2);">
+                <p style="color: rgba(255,255,255,0.7); font-size: 14px; margin: 0;">
+                    App Version: ${CONFIG.VERSION} | Required: ${this.currentYear} Standards
+                </p>
+            </div>
+        `;
+
+        overlay.appendChild(content);
+        document.body.appendChild(overlay);
+    }
+
+    /**
+     * Disable all interactive elements
+     */
+    disableAllInteractions() {
+        // Disable all buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        // Disable all clickable elements
+        document.querySelectorAll('[onclick], .wheel-option, .category-btn, .region-btn').forEach(el => {
+            el.style.opacity = '0.5';
+            el.style.cursor = 'not-allowed';
+            el.style.pointerEvents = 'none';
+        });
+
+        // Disable inputs
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            input.disabled = true;
+            input.style.opacity = '0.5';
+        });
+
+        // Create global click prevention
+        document.addEventListener('click', (e) => {
+            if (this.isLocked) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true);
+    }
+
+    /**
+     * Unlock the app (called after update)
+     */
+    unlockApp() {
+        this.isLocked = false;
+        const overlay = document.getElementById('yearLockdownOverlay');
+        if (overlay) overlay.remove();
+        
+        // Re-enable all elements
+        document.querySelectorAll('button, input, select, textarea').forEach(el => {
+            el.disabled = false;
+            el.style.opacity = '1';
+            el.style.cursor = 'pointer';
+            el.style.pointerEvents = 'auto';
+        });
+
+        document.querySelectorAll('[onclick], .wheel-option, .category-btn, .region-btn').forEach(el => {
+            el.style.opacity = '1';
+            el.style.cursor = 'pointer';
+            el.style.pointerEvents = 'auto';
+        });
+
+        dbg('🔓 Application unlocked');
+    }
+
+    /**
+     * Check if app needs update
+     */
+    needsUpdate() {
+        return this.isLocked;
+    }
+}
+
+const yearLockdown = new YearLockdownSystem();
 
 /** Performance metrics tracking */
 const METRICS = {
@@ -5246,6 +5438,14 @@ async function initApp() {
         
         dbg('📱 Initializing application...');
         
+        // 0. Check year lockdown status FIRST
+        if (yearLockdown.needsUpdate()) {
+            dbg('🔒 Year lockdown active - app initialization halted');
+            performanceMonitor.mark('app-init-end');
+            performanceMonitor.measure('initialization', 'app-init-start', 'app-init-end');
+            return; // Stop initialization
+        }
+        
         // 1. Verify DOM is ready
         if (!document.body) {
             throw new Error('DOM not ready');
@@ -5334,6 +5534,8 @@ function registerGlobalAPI() {
     window.performanceMonitor = performanceMonitor;
     window.errorBoundary = errorBoundary;
     window.apiClient = apiClient;
+    window.yearLockdown = yearLockdown;  // Year lockdown system
+    window.unlockApp = () => yearLockdown.unlockApp();  // Unlock after update
     
     dbg('✅ Global API registered');
 }

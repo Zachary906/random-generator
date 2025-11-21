@@ -628,32 +628,44 @@ const paradoxInfo = {
     1023: { era: 'Future', basedOn: 'Cobalion' },
 };
 
-// All Fossil Pokémon (revived from fossils across all generations)
+// All Fossil Pokémon - evolved from fossils or evolved from fossil Pokémon
+// Includes all evolutionary lines starting from fossil revivals
 const fossilPokemon = [
-    // Gen 1 - Fossils
-    138, 139, // Omanyte line
-    140, 141, // Kabuto line
+    // Gen 1 - Omanyte line (evolves from fossil)
+    138, 139, // Omanyte → Omastar
     
-    // Gen 3 - Fossils
-    345, 346, // Lileep line
-    347, 348, // Cradily/Anorith line
+    // Gen 1 - Kabuto line (evolves from fossil)
+    140, 141, // Kabuto → Kabutops
     
-    // Gen 4 - Fossils
-    408, 409, 410, // Cranidos line
-    411, 412, 413, // Shieldon line (Cranidos)
+    // Gen 3 - Lileep line (evolves from fossil)
+    345, 346, // Lileep → Cradily
     
-    // Gen 5 - Fossils
-    564, 565, // Tirtouga line
-    566, 567, // Dracozolt/Arrokuda combos
+    // Gen 3 - Anorith line (evolves from fossil)
+    347, 348, // Anorith → Armaldo
     
-    // Gen 8 - Fossils (Galar)
-    880, 881, // Dracozolt (Dragon/Electric)
-    882, 883, // Arctozolt (Electric/Ice)
-    884, 885, // Dracovish (Water/Dragon)
-    886, 887, // Arctovish (Water/Ice)
+    // Gen 4 - Cranidos line (evolves from fossil)
+    408, 409, // Cranidos → Rampardos
     
-    // Gen 9 - Fossils (Paldea - Scarlet/Violet)
-    1003, 1004, // Ancient Pokémon in Paldea region
+    // Gen 4 - Shieldon line (evolves from fossil)
+    410, 411, // Shieldon → Bastionage
+    
+    // Gen 5 - Tirtouga line (evolves from fossil)
+    564, 565, // Tirtouga → Carracosta
+    
+    // Gen 5 - Archen line (evolves from fossil)
+    566, 567, // Archen → Archeops
+    
+    // Gen 8 - Dracozolt (fossil revival combination)
+    880, // Dracozolt (Dragon/Electric)
+    
+    // Gen 8 - Arctozolt (fossil revival combination)
+    882, // Arctozolt (Electric/Ice)
+    
+    // Gen 8 - Dracovish (fossil revival combination)
+    884, // Dracovish (Water/Dragon)
+    
+    // Gen 8 - Arctovish (fossil revival combination)
+    886, // Arctovish (Water/Ice)
 ];
 
 // List of all Starter Pokémon and their evolutions

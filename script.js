@@ -3816,6 +3816,191 @@ if (resultModal) {
     });
 }
 
+// ============================================
+// POKÉMON CHECKLIST FUNCTIONALITY
+// ============================================
+
+const pokemonByGeneration = {
+    1: { start: 1, end: 151, name: 'Kanto' },
+    2: { start: 152, end: 251, name: 'Johto' },
+    3: { start: 252, end: 386, name: 'Hoenn' },
+    4: { start: 387, end: 493, name: 'Sinnoh' },
+    5: { start: 494, end: 649, name: 'Unova' },
+    6: { start: 650, end: 721, name: 'Kalos' },
+    7: { start: 722, end: 809, name: 'Alola' },
+    8: { start: 810, end: 905, name: 'Galar' },
+    9: { start: 906, end: 1025, name: 'Paldea' }
+};
+
+let currentChecklistRegion = 'all';
+let checklistData = {};
+
+// Load checklist data from localStorage
+function loadChecklistData() {
+    const saved = localStorage.getItem('pokemonChecklist');
+    if (saved) {
+        checklistData = JSON.parse(saved);
+    }
+}
+
+// Save checklist data to localStorage
+function saveChecklistData() {
+    localStorage.setItem('pokemonChecklist', JSON.stringify(checklistData));
+}
+
+// Open checklist screen
+async function openChecklistScreen() {
+    document.getElementById('selectionScreen').style.display = 'none';
+    document.getElementById('checklistScreen').style.display = 'flex';
+    loadChecklistData();
+    await populateChecklist('all');
+    setupChecklistEventListeners();
+}
+window.openChecklistScreen = openChecklistScreen;
+
+// Populate checklist based on region
+async function populateChecklist(region) {
+    currentChecklistRegion = region;
+    const container = document.getElementById('checklistContainer');
+    container.innerHTML = '<p style="text-align: center; color: #999;">Loading Pokémon...</p>';
+    
+    let pokemonList = [];
+    
+    if (region === 'all') {
+        // Fetch all Pokémon
+        for (let gen = 1; gen <= 9; gen++) {
+            const genData = pokemonByGeneration[gen];
+            for (let id = genData.start; id <= genData.end; id++) {
+                pokemonList.push(id);
+            }
+        }
+    } else {
+        // Fetch specific generation
+        const genData = pokemonByGeneration[region];
+        for (let id = genData.start; id <= genData.end; id++) {
+            pokemonList.push(id);
+        }
+    }
+    
+    // Fetch Pokémon names from API
+    const pokemonDetails = [];
+    try {
+        for (const id of pokemonList) {
+            try {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    pokemonDetails.push({
+                        id: data.id,
+                        name: data.name
+                    });
+                }
+            } catch (e) {
+                console.error(`Failed to fetch Pokémon ${id}`);
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching Pokémon:', e);
+    }
+    
+    // Render checklist
+    container.innerHTML = pokemonDetails.map(p => `
+        <div class="checklist-item ${checklistData[p.id] ? 'checked' : ''}">
+            <input type="checkbox" id="pok-${p.id}" ${checklistData[p.id] ? 'checked' : ''} data-pokemon-id="${p.id}">
+            <label for="pok-${p.id}">#${p.id} ${p.name.charAt(0).toUpperCase() + p.name.slice(1).replace('-', ' ')}</label>
+        </div>
+    `).join('');
+    
+    updateChecklistStats();
+}
+
+// Update stats display
+function updateChecklistStats() {
+    const container = document.getElementById('checklistContainer');
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const total = checkboxes.length;
+    
+    document.getElementById('checkedCount').textContent = checked;
+    document.getElementById('totalCount').textContent = total;
+}
+
+// Setup event listeners for checklist
+function setupChecklistEventListeners() {
+    // Region buttons
+    document.querySelectorAll('.region-btn').forEach(btn => {
+        btn.removeEventListener('click', handleRegionClick);
+        btn.addEventListener('click', handleRegionClick);
+    });
+    
+    // Back button
+    const backBtn = document.getElementById('checklistBackBtn');
+    if (backBtn) {
+        backBtn.removeEventListener('click', backToSelection);
+        backBtn.addEventListener('click', backToSelection);
+    }
+    
+    // Checkboxes
+    document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(checkbox => {
+        checkbox.removeEventListener('change', handleCheckboxChange);
+        checkbox.addEventListener('change', handleCheckboxChange);
+    });
+    
+    // Checklist items (for click to toggle)
+    document.querySelectorAll('.checklist-item').forEach(item => {
+        item.removeEventListener('click', handleChecklistItemClick);
+        item.addEventListener('click', handleChecklistItemClick);
+    });
+}
+
+function handleRegionClick(e) {
+    document.querySelectorAll('.region-btn').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    populateChecklist(e.target.dataset.region);
+}
+
+function handleCheckboxChange(e) {
+    const pokemonId = parseInt(e.target.dataset.pokemonId);
+    checklistData[pokemonId] = e.target.checked;
+    saveChecklistData();
+    
+    // Update item styling
+    e.target.parentElement.classList.toggle('checked', e.target.checked);
+    updateChecklistStats();
+}
+
+function handleChecklistItemClick(e) {
+    if (e.target.tagName !== 'LABEL') return;
+    const checkbox = e.currentTarget.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+// Back to selection
+function backToSelectionFromChecklist() {
+    document.getElementById('checklistScreen').style.display = 'none';
+    document.getElementById('selectionScreen').style.display = 'flex';
+}
+
+// Override backToSelection to handle checklist
+const originalBackToSelection = backToSelection;
+function backToSelectionNew() {
+    const checklistScreen = document.getElementById('checklistScreen');
+    if (checklistScreen && checklistScreen.style.display !== 'none') {
+        backToSelectionFromChecklist();
+    } else {
+        originalBackToSelection();
+    }
+}
+backToSelection = backToSelectionNew;
+window.backToSelection = backToSelection;
+
+// Initialize checklist data on load
+loadChecklistData();
+
 // Don't auto-initialize - wait for user selection
 console.log('Pokémon Wheel Spinner loaded. Waiting for generation selection...');
 console.log('=== INITIALIZATION COMPLETE ===');;
+

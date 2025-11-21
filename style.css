@@ -38,6 +38,33 @@ body {
     font-weight: bold;
 }
 
+/* Command Input on Selection Screen */
+.command-input-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.selection-command-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.selection-command-input:focus {
+    border-color: white;
+    background: white;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+}
+
 .main-shiny-toggle {
     background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
     color: #4b0082;

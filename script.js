@@ -4281,6 +4281,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Initialize selection screen command input listener
+document.addEventListener('DOMContentLoaded', function() {
+    const selectionCommandInput = document.getElementById('selectionCommandInput');
+    const listOption = document.getElementById('listOption');
+    
+    if (selectionCommandInput) {
+        selectionCommandInput.addEventListener('input', function(e) {
+            const value = e.target.value.trim().toLowerCase();
+            
+            if (value === 'list') {
+                // Show the list option
+                listOption.style.display = 'block';
+            } else {
+                // Hide the list option
+                listOption.style.display = 'none';
+            }
+        });
+    }
+});
+
 // Don't auto-initialize - wait for user selection
 console.log('Pokémon Wheel Spinner loaded. Waiting for generation selection...');
 console.log('=== INITIALIZATION COMPLETE ===');;

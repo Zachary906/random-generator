@@ -4286,16 +4286,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectionCommandInput = document.getElementById('selectionCommandInput');
     const listOption = document.getElementById('listOption');
     
+    // Listen for 'l' key press globally
+    document.addEventListener('keydown', function(e) {
+        const char = e.key.toLowerCase();
+        
+        // If 'l' is pressed and we're on the selection screen
+        if (char === 'l' && document.getElementById('selectionScreen').style.display !== 'none') {
+            if (listOption) {
+                listOption.style.display = 'block';
+            }
+        }
+    });
+    
+    // Also listen to the input field for backups
     if (selectionCommandInput) {
         selectionCommandInput.addEventListener('input', function(e) {
             const value = e.target.value.trim().toLowerCase();
             
-            if (value === 'list') {
+            if (value.includes('l')) {
                 // Show the list option
-                listOption.style.display = 'block';
+                if (listOption) {
+                    listOption.style.display = 'block';
+                }
             } else {
                 // Hide the list option
-                listOption.style.display = 'none';
+                if (listOption) {
+                    listOption.style.display = 'none';
+                }
             }
         });
     }

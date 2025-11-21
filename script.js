@@ -1214,71 +1214,65 @@ async function searchPokemonCategory(query) {
             const listResponse = await fetch('https://pokeapi.co/api/v2/pokemon?limit=10000');
             const listData = await listResponse.json();
             
-            // Find matches - case insensitive, includes spaces/hyphens
-            const matches = listData.results.filter(p => 
-                p.name.includes(query) || 
-                p.name.replace('-', ' ').includes(query.replace('-', ' ')) ||
-                query.split(' ').every((word, i) => p.name[i] === word[0]) // starts with query words
-            );
+            // Sort matches by priority:
+            // 1. Starts with query (first letters match)
+            // 2. Contains query exactly
+            // 3. Fuzzy match (letters in order)
             
-            if (matches.length === 0) {
-                // Try even more fuzzy - just check if query letters appear in order
-                const veryFuzzyMatches = listData.results.filter(p => {
+            const startsWith = [];
+            const contains = [];
+            const fuzzyMatches = [];
+            
+            for (const p of listData.results) {
+                const pName = p.name.replace('-', ' ');
+                const queryFormatted = query.replace('-', ' ');
+                
+                if (pName.startsWith(queryFormatted)) {
+                    startsWith.push(p);
+                } else if (pName.includes(queryFormatted)) {
+                    contains.push(p);
+                } else {
+                    // Fuzzy - letters in order
                     let queryIndex = 0;
-                    for (let i = 0; i < p.name.length && queryIndex < query.length; i++) {
-                        if (p.name[i] === query[queryIndex]) {
+                    for (let i = 0; i < pName.length && queryIndex < queryFormatted.length; i++) {
+                        if (pName[i] === queryFormatted[queryIndex]) {
                             queryIndex++;
                         }
                     }
-                    return queryIndex === query.length;
-                }).slice(0, 10);
-                
-                if (veryFuzzyMatches.length === 0) {
-                    pokedexResult.innerHTML = `
-                        <div class="pokemon-entry">
-                            <p class="pokedex-error">No Pokémon found matching "${query}"</p>
-                            <p style="margin-top: 15px; color: #666;">Try searching by:</p>
-                            <ul style="margin: 10px 0; color: #666;">
-                                <li>Full name: pikachu, charizard</li>
-                                <li>Partial name: pika, char</li>
-                                <li>Pokédex number: 25, 6</li>
-                            </ul>
-                        </div>
-                    `;
-                    return;
+                    if (queryIndex === queryFormatted.length) {
+                        fuzzyMatches.push(p);
+                    }
                 }
-                
-                if (veryFuzzyMatches.length === 1) {
-                    const response = await fetch(veryFuzzyMatches[0].url);
-                    pokemon = await response.json();
-                } else {
-                    // Show suggestions
-                    pokedexResult.innerHTML = `
-                        <div class="pokemon-entry">
-                            <p class="pokedex-error" style="margin-bottom: 20px;">Did you mean one of these?</p>
-                            <div style="display: grid; gap: 10px;">
-                                ${veryFuzzyMatches.map(m => `
-                                    <button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${m.name}'; searchPokemon();" 
-                                            style="padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1rem; font-weight: bold; text-transform: capitalize;">
-                                        ${m.name.replace('-', ' ')}
-                                    </button>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                    return;
-                }
-            } else if (matches.length === 1) {
-                const response = await fetch(matches[0].url);
-                pokemon = await response.json();
-            } else {
-                // Show top matches as suggestions
-                const topMatches = matches.slice(0, 10);
+            }
+            
+            // Combine all matches, prioritized
+            const allMatches = [...startsWith, ...contains, ...fuzzyMatches];
+            
+            if (allMatches.length === 0) {
                 pokedexResult.innerHTML = `
                     <div class="pokemon-entry">
-                        <p class="pokedex-error" style="margin-bottom: 20px;">Multiple matches found. Pick one:</p>
-                        <div style="display: grid; gap: 10px;">
-                            ${topMatches.map(m => `
+                        <p class="pokedex-error">No Pokémon found matching "${query}"</p>
+                        <p style="margin-top: 15px; color: #666;">Try searching by:</p>
+                        <ul style="margin: 10px 0; color: #666;">
+                            <li>Full name: pikachu, charizard</li>
+                            <li>Partial name: pika, char</li>
+                            <li>Pokédex number: 25, 6</li>
+                        </ul>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (allMatches.length === 1) {
+                const response = await fetch(allMatches[0].url);
+                pokemon = await response.json();
+            } else {
+                // Show ALL matches - not just suggestions
+                pokedexResult.innerHTML = `
+                    <div class="pokemon-entry">
+                        <p class="pokedex-error" style="margin-bottom: 20px;">Found ${allMatches.length} matches:</p>
+                        <div style="display: grid; gap: 10px; max-height: 500px; overflow-y: auto;">
+                            ${allMatches.map(m => `
                                 <button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${m.name}'; searchPokemon();" 
                                         style="padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1rem; font-weight: bold; text-transform: capitalize;">
                                     ${m.name.replace('-', ' ')}
@@ -1299,7 +1293,8 @@ async function searchPokemonCategory(query) {
         const flavorTextEntries = speciesData.flavor_text_entries.filter(entry => entry.language.name === 'en');
         
         // Get sprite (shiny if mode is active OR if "shiny" was in query)
-        const useShiny = forceShiny || isShinyMode;
+        // Get sprite - ONLY use shiny if explicitly requested with "shiny" keyword, NOT from isShinyMode
+        const useShiny = forceShiny;
         const sprite = (useShiny && pokemon.sprites.other['official-artwork'].front_shiny) 
             ? pokemon.sprites.other['official-artwork'].front_shiny 
             : pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default;

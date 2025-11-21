@@ -4297,9 +4297,112 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// Open list view screen
+async function openListView() {
+    hideAllScreens();
+    document.getElementById('listScreen').style.display = 'block';
+    await displayListView('all');
+}
+
+// Display Pokémon list
+async function displayListView(region) {
+    const container = document.getElementById('listContainer');
+    container.innerHTML = '<p style="text-align: center; color: #999;">Loading Pokémon...</p>';
+    
+    let pokemonList = [];
+    
+    if (region === 'all') {
+        // Fetch all Pokémon
+        for (let gen = 1; gen <= 9; gen++) {
+            const genData = pokemonByGeneration[gen];
+            for (let id = genData.start; id <= genData.end; id++) {
+                pokemonList.push(id);
+            }
+        }
+    } else {
+        // Fetch specific generation
+        const genData = pokemonByGeneration[region];
+        for (let id = genData.start; id <= genData.end; id++) {
+            pokemonList.push(id);
+        }
+    }
+    
+    // Fetch Pokémon names from API
+    const pokemonDetails = [];
+    try {
+        for (const id of pokemonList) {
+            try {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    pokemonDetails.push({
+                        id: data.id,
+                        name: data.name
+                    });
+                }
+            } catch (e) {
+                console.error(`Failed to fetch Pokémon ${id}`);
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching Pokémon:', e);
+    }
+    
+    // Render list
+    container.innerHTML = pokemonDetails.map(p => `
+        <div class="checklist-item">
+            <span>#${p.id} ${p.name.charAt(0).toUpperCase() + p.name.slice(1).replace('-', ' ')}</span>
+        </div>
+    `).join('');
+    
+    // Update total count
+    document.getElementById('listTotalCount').textContent = pokemonDetails.length;
+}
+
+// Setup list view event listeners
+function setupListViewEventListeners() {
+    // Back button
+    const backBtn = document.getElementById('listBackBtn');
+    if (backBtn) {
+        backBtn.removeEventListener('click', backToSelectionFromListView);
+        backBtn.addEventListener('click', backToSelectionFromListView);
+    }
+    
+    // Region buttons
+    document.querySelectorAll('#listScreen .region-btn').forEach(btn => {
+        btn.removeEventListener('click', handleListViewRegionClick);
+        btn.addEventListener('click', handleListViewRegionClick);
+    });
+}
+
+function handleListViewRegionClick(e) {
+    document.querySelectorAll('#listScreen .region-btn').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    displayListView(e.target.dataset.region);
+}
+
+function backToSelectionFromListView() {
+    document.getElementById('listScreen').style.display = 'none';
+    document.getElementById('selectionScreen').style.display = 'flex';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const selectionCommandInput = document.getElementById('selectionCommandInput');
     const listOption = document.getElementById('listOption');
+    const listBackBtn = document.getElementById('listBackBtn');
+    
+    // Setup list view event listeners
+    setupListViewEventListeners();
+    
+    // Back button for list screen
+    if (listBackBtn) {
+        listBackBtn.addEventListener('click', backToSelectionFromListView);
+    }
+    
+    // Region buttons for list screen
+    document.querySelectorAll('#listScreen .region-btn').forEach(btn => {
+        btn.addEventListener('click', handleListViewRegionClick);
+    });
     
     // Also listen to the input field for text-based trigger
     if (selectionCommandInput) {

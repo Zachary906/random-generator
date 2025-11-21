@@ -160,11 +160,11 @@
                     <p>Track Your Collection</p>
                     <p class="gen-range">By Region</p>
                 </div>
-                <div class="wheel-option special list-option" id="listOption" style="display: none;" onclick="if(window.openChecklistScreen){window.openChecklistScreen()}">
+                <div class="wheel-option special list-option" id="listOption" style="display: none;" onclick="if(window.openListView){window.openListView()}">
                     <div class="option-icon">📋</div>
                     <h2>POKÉMON LIST</h2>
                     <p>View by Region</p>
-                    <p class="gen-range">Type 'list'</p>
+                    <p class="gen-range">Press 'l'</p>
                 </div>
             </div>
             
@@ -231,6 +231,36 @@
 
             <!-- Pokémon Checklist -->
             <div id="checklistContainer" class="checklist-items-container"></div>
+        </div>
+    </div>
+
+    <!-- List View Screen -->
+    <div id="listScreen" class="checklist-screen" style="display: none;">
+        <div class="checklist-container">
+            <button id="listBackBtn" class="back-button">← Back to Menu</button>
+            <h1 class="checklist-title">📋 Pokémon List</h1>
+            
+            <!-- Region Selector -->
+            <div class="region-selector">
+                <button class="region-btn active" data-region="all">All Pokémon</button>
+                <button class="region-btn" data-region="1">Gen 1: Kanto</button>
+                <button class="region-btn" data-region="2">Gen 2: Johto</button>
+                <button class="region-btn" data-region="3">Gen 3: Hoenn</button>
+                <button class="region-btn" data-region="4">Gen 4: Sinnoh</button>
+                <button class="region-btn" data-region="5">Gen 5: Unova</button>
+                <button class="region-btn" data-region="6">Gen 6: Kalos</button>
+                <button class="region-btn" data-region="7">Gen 7: Alola</button>
+                <button class="region-btn" data-region="8">Gen 8: Galar</button>
+                <button class="region-btn" data-region="9">Gen 9: Paldea</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="checklist-stats">
+                Total: <span id="listTotalCount">0</span> Pokémon
+            </div>
+
+            <!-- Pokémon List -->
+            <div id="listContainer" class="checklist-items-container"></div>
         </div>
     </div>
 

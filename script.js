@@ -4238,16 +4238,18 @@ loadChecklistData();
 // Initialize command input listener
 document.addEventListener('DOMContentLoaded', function() {
     const commandInput = document.getElementById('commandInput');
+    const checklistBackBtn = document.getElementById('checklistBackBtn');
+    
     if (commandInput) {
         commandInput.addEventListener('input', function(e) {
             const value = e.target.value.trim().toLowerCase();
-            const listViewContainer = document.getElementById('listViewContainer');
-            const wheelViewContainer = document.getElementById('wheelViewContainer');
             const checklistScreen = document.getElementById('checklistScreen');
             const mainScreen = document.getElementById('mainScreen');
+            const selectionScreen = document.getElementById('selectionScreen');
             
             if (value === 'list') {
-                // Show checklist screen instead of inline list
+                // Show checklist screen - hide everything else
+                selectionScreen.style.display = 'none';
                 mainScreen.style.display = 'none';
                 checklistScreen.style.display = 'flex';
                 
@@ -4257,11 +4259,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     populateChecklist('all');
                 }
             } else {
-                // Show main wheel view
+                // Show nothing when text is cleared - user is back at selection
                 checklistScreen.style.display = 'none';
-                mainScreen.style.display = 'flex';
-                listViewContainer.style.display = 'none';
-                wheelViewContainer.style.display = 'block';
+                mainScreen.style.display = 'none';
+                selectionScreen.style.display = 'flex';
+            }
+        });
+    }
+    
+    // Make checklist back button clear the input and return to selection
+    if (checklistBackBtn) {
+        checklistBackBtn.addEventListener('click', function() {
+            if (commandInput) {
+                commandInput.value = '';
+                commandInput.dispatchEvent(new Event('input', { bubbles: true }));
+            } else {
+                document.getElementById('checklistScreen').style.display = 'none';
+                document.getElementById('selectionScreen').style.display = 'flex';
             }
         });
     }

@@ -160,13 +160,12 @@
                     <p>Track Your Collection</p>
                     <p class="gen-range">By Region</p>
                 </div>
-                <div class="wheel-option special list-option" id="listOption" style="display: none;" onclick="if(window.openListView){window.openListView()}">
-                    <div class="option-icon">📋</div>
-                    <h2>POKÉMON LIST</h2>
-                    <p>View by Region</p>
-                    <p class="gen-range">Press 'l'</p>
-                </div>
             </div>
+            
+            <!-- List Option Button (Separate from wheel grid) -->
+            <button id="listOption" style="display: none; margin-top: 20px; padding: 12px 30px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;" onclick="if(window.openListView){window.openListView()}">
+                📋 VIEW POKÉMON LIST
+            </button>
             
             <!-- Command Input -->
             <div class="command-input-wrapper" style="margin-top: 30px;">

@@ -3061,6 +3061,97 @@ async function initializePokemonList() {
     }
 }
 
+// Region-based list initialization
+async function initializeRegionDropdownList() {
+    const container = document.getElementById('regionDropdowns');
+    const loading = document.getElementById('loading');
+    
+    container.innerHTML = '';
+    loading.style.display = 'block';
+    
+    try {
+        // Define regions
+        const regions = [
+            { name: 'Kanto (Gen 1)', start: 1, end: 151 },
+            { name: 'Johto (Gen 2)', start: 152, end: 251 },
+            { name: 'Hoenn (Gen 3)', start: 252, end: 386 },
+            { name: 'Sinnoh (Gen 4)', start: 387, end: 493 },
+            { name: 'Unova (Gen 5)', start: 494, end: 649 },
+            { name: 'Kalos (Gen 6)', start: 650, end: 721 },
+            { name: 'Alola (Gen 7)', start: 722, end: 809 },
+            { name: 'Galar (Gen 8)', start: 810, end: 905 },
+            { name: 'Paldea (Gen 9)', start: 906, end: 1025 }
+        ];
+        
+        // Build region dropdowns
+        for (const region of regions) {
+            const regionDiv = document.createElement('div');
+            regionDiv.className = 'region-dropdown open';
+            
+            // Fetch Pokémon for this region
+            const pokemonIds = [];
+            for (let id = region.start; id <= region.end; id++) {
+                pokemonIds.push(id);
+            }
+            
+            // Fetch details
+            const pokemonDetails = [];
+            for (const id of pokemonIds) {
+                try {
+                    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        pokemonDetails.push({
+                            id: data.id,
+                            name: data.name
+                        });
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch Pokémon ${id}`);
+                }
+            }
+            
+            // Create header and list
+            const header = document.createElement('div');
+            header.className = 'region-dropdown-header';
+            header.innerHTML = `
+                <span>${region.name} (${pokemonDetails.length} Pokémon)</span>
+                <span class="arrow">▼</span>
+            `;
+            header.onclick = function() {
+                regionDiv.classList.toggle('open');
+                list.classList.toggle('hidden');
+            };
+            
+            const list = document.createElement('div');
+            list.className = 'region-pokemon-list';
+            list.innerHTML = pokemonDetails.map(p => `
+                <div class="region-pokemon-item">
+                    <input type="checkbox" id="pok-${p.id}" data-pokemon-id="${p.id}">
+                    <label for="pok-${p.id}">#${String(p.id).padStart(4, '0')} ${p.name.charAt(0).toUpperCase() + p.name.slice(1).replace('-', ' ')}</label>
+                </div>
+            `).join('');
+            
+            // Add event listeners to checkboxes
+            list.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.onchange = function() {
+                    this.parentElement.classList.toggle('checked', this.checked);
+                };
+            });
+            
+            regionDiv.appendChild(header);
+            regionDiv.appendChild(list);
+            container.appendChild(regionDiv);
+        }
+        
+        loading.style.display = 'none';
+    } catch (error) {
+        console.error('Error loading region dropdowns:', error);
+        container.innerHTML = '<p style="color: red; text-align: center;">Error loading Pokémon. Please try again.</p>';
+        loading.style.display = 'none';
+    }
+}
+
 // Handle list item checkbox changes
 function handleListItemCheck(element) {
     const checkbox = element.querySelector('input[type="checkbox"]');
@@ -4095,6 +4186,34 @@ window.backToSelection = backToSelection;
 
 // Initialize checklist data on load
 loadChecklistData();
+
+// Initialize command input listener
+document.addEventListener('DOMContentLoaded', function() {
+    const commandInput = document.getElementById('commandInput');
+    if (commandInput) {
+        commandInput.addEventListener('input', function(e) {
+            const value = e.target.value.trim().toLowerCase();
+            const listViewContainer = document.getElementById('listViewContainer');
+            const wheelViewContainer = document.getElementById('wheelViewContainer');
+            
+            if (value === 'list') {
+                // Show list view
+                listViewContainer.style.display = 'block';
+                wheelViewContainer.style.display = 'none';
+                
+                // Initialize region dropdowns if not already done
+                const regionDropdowns = document.getElementById('regionDropdowns');
+                if (regionDropdowns.innerHTML === '') {
+                    initializeRegionDropdownList();
+                }
+            } else {
+                // Show wheel view
+                listViewContainer.style.display = 'none';
+                wheelViewContainer.style.display = 'block';
+            }
+        });
+    }
+});
 
 // Don't auto-initialize - wait for user selection
 console.log('Pokémon Wheel Spinner loaded. Waiting for generation selection...');

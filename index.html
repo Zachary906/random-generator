@@ -229,10 +229,23 @@
         <button id="backBtn" class="back-button" onclick="if(window.backToSelection){window.backToSelection()}">← Change Wheel</button>
         <h1>Pokémon List</h1>
         <p class="subtitle">Original 151 Pokémon</p>
-        <div class="list-container">
-            <div id="pokemonListView" class="pokemon-list-view"></div>
+        
+        <!-- Command Input -->
+        <div class="command-input-container">
+            <input type="text" id="commandInput" class="command-input" placeholder="Type 'list' to view Pokémon by region..." autocomplete="off">
+        </div>
+        
+        <!-- List View (Hidden by default, shows when "list" is typed) -->
+        <div id="listViewContainer" class="list-view-container" style="display: none;">
+            <div id="regionDropdowns" class="region-dropdowns"></div>
             <div id="loading" class="loading">Loading Pokémon data...</div>
         </div>
+        
+        <!-- Wheel View (Default) -->
+        <div id="wheelViewContainer" class="list-container">
+            <div id="pokemonListView" class="pokemon-list-view"></div>
+        </div>
+    </div>
     </div>
     
     <!-- Popup Modal -->

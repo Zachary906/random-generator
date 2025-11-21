@@ -175,13 +175,13 @@ class YearLockdownSystem {
             input.style.opacity = '0.5';
         });
 
-        // Create global click prevention
-        document.addEventListener('click', (e) => {
-            if (this.isLocked) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }, true);
+        // Global click prevention DISABLED for development
+        // document.addEventListener('click', (e) => {
+        //     if (this.isLocked) {
+        //         e.preventDefault();
+        //         e.stopPropagation();
+        //     }
+        // }, true);
     }
 
     /**

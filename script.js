@@ -431,6 +431,236 @@ class APIClient {
 
 const apiClient = new APIClient();
 
+// ============================================================================
+// ERROR BOUNDARY & RESILIENCE
+// ============================================================================
+
+/**
+ * Global error handler with recovery strategies
+ */
+class ErrorBoundary {
+    constructor() {
+        this.errors = [];
+        this.errorTimeout = 30000; // 30 seconds
+        this.setupHandlers();
+    }
+
+    setupHandlers() {
+        // Unhandled errors
+        window.addEventListener('error', (event) => {
+            this.captureError({
+                type: 'error',
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                stack: event.error?.stack,
+            });
+        });
+
+        // Unhandled promise rejections
+        window.addEventListener('unhandledrejection', (event) => {
+            this.captureError({
+                type: 'unhandledRejection',
+                reason: event.reason,
+                promise: event.promise,
+            });
+        });
+    }
+
+    /**
+     * Capture and log error with recovery
+     */
+    captureError(errorData) {
+        const error = {
+            ...errorData,
+            timestamp: Date.now(),
+            url: window.location.href,
+        };
+
+        this.errors.push(error);
+        METRICS.errors.push(error);
+
+        // Keep only recent errors
+        if (this.errors.length > 20) {
+            this.errors = this.errors.slice(-20);
+        }
+
+        dbg(`🚨 Error: ${error.message}`);
+        console.error('Error captured:', error);
+
+        // Try to recover
+        this.attemptRecovery(error);
+    }
+
+    /**
+     * Attempt automatic recovery
+     */
+    attemptRecovery(error) {
+        if (error.type === 'error' && error.message.includes('fetch')) {
+            dbg('🔄 Attempting recovery: Clearing cache');
+            apiClient.clear();
+        }
+    }
+
+    getErrors() {
+        return [...this.errors];
+    }
+
+    clear() {
+        this.errors = [];
+    }
+}
+
+const errorBoundary = new ErrorBoundary();
+
+// ============================================================================
+// PERFORMANCE MONITORING
+// ============================================================================
+
+/**
+ * Performance monitoring and analytics
+ */
+class PerformanceMonitor {
+    constructor() {
+        this.marks = new Map();
+        this.measures = new Map();
+        this.enabled = CONFIG.PERFORMANCE_TRACKING;
+    }
+
+    /**
+     * Mark performance checkpoint
+     */
+    mark(name, data = {}) {
+        if (!this.enabled) return;
+        
+        this.marks.set(name, {
+            timestamp: performance.now(),
+            data,
+        });
+    }
+
+    /**
+     * Measure duration between marks
+     */
+    measure(name, startMark, endMark) {
+        if (!this.enabled) return null;
+        
+        const start = this.marks.get(startMark);
+        const end = this.marks.get(endMark) || { timestamp: performance.now() };
+
+        if (!start) {
+            console.warn(`Mark '${startMark}' not found`);
+            return null;
+        }
+
+        const duration = end.timestamp - start.timestamp;
+        this.measures.set(name, { duration, startMark, endMark });
+
+        return duration;
+    }
+
+    /**
+     * Get comprehensive metrics report
+     */
+    getReport() {
+        const now = performance.now();
+        const pageLoadDuration = now - METRICS.pageLoadTime;
+
+        return {
+            version: CONFIG.VERSION,
+            timestamp: new Date().toISOString(),
+            uptime: now,
+            pageLoadDuration,
+            api: {
+                totalCalls: METRICS.apiCalls,
+                cacheHits: METRICS.cacheHits,
+                cacheMisses: METRICS.cacheMisses,
+                cacheHitRate: METRICS.cacheHits / (METRICS.cacheHits + METRICS.cacheMisses) || 0,
+                avgResponseTime: this.getAverageAPIResponseTime(),
+            },
+            memory: this.getMemoryInfo(),
+            errors: {
+                total: METRICS.errors.length,
+                recentErrors: METRICS.errors.slice(-5),
+            },
+            cache: apiClient.getStats(),
+        };
+    }
+
+    /**
+     * Get memory usage if available
+     */
+    getMemoryInfo() {
+        if (!performance.memory) {
+            return { available: false };
+        }
+
+        return {
+            usedJSHeapSize: Math.round(performance.memory.usedJSHeapSize / 1048576),
+            totalJSHeapSize: Math.round(performance.memory.totalJSHeapSize / 1048576),
+            jsHeapSizeLimit: Math.round(performance.memory.jsHeapSizeLimit / 1048576),
+        };
+    }
+
+    getAverageAPIResponseTime() {
+        if (METRICS.apiCalls === 0) return 0;
+        // Simplified - would need actual response time tracking
+        return 0;
+    }
+
+    /**
+     * Display performance dashboard
+     */
+    showDashboard() {
+        const report = this.getReport();
+        const dashboardHTML = `
+            <div style="background: #1a1a2e; color: #00ff00; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 12px;">
+                <h3 style="color: #00bfff; margin-bottom: 15px;">⚡ Performance Dashboard</h3>
+                <pre>${JSON.stringify(report, null, 2)}</pre>
+            </div>
+        `;
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: ${CONFIG.PERFORMANCE_TRACKING ? 10000 : 0};
+            background: rgba(0,0,0,0.95);
+            padding: 30px;
+            border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid #00bfff;
+        `;
+        modal.innerHTML = dashboardHTML;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.style.cssText = `
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #00bfff;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        `;
+        closeBtn.onclick = () => modal.remove();
+        modal.appendChild(closeBtn);
+        
+        document.body.appendChild(modal);
+    }
+}
+
+const performanceMonitor = new PerformanceMonitor();
+
+// Expose for global access
+window.showStats = () => performanceMonitor.showDashboard();
+
 let selectedGeneration = null;
 let pokemonLimit = 151;
 let pokemonOffset = 0;
@@ -5002,11 +5232,145 @@ backToSelection = backToSelectionNew;
 window.backToSelection = backToSelection;
 
 // Initialize checklist data on load
-loadChecklistData();
-loadHistory();
-setupCrossTabSync();
+// ============================================================================
+// MODERN APPLICATION INITIALIZATION (v6.0)
+// ============================================================================
 
-// Initialize command input listener
+/**
+ * Application initialization handler
+ * Runs after DOM is ready and script has fully loaded
+ */
+async function initApp() {
+    try {
+        performanceMonitor.mark('app-init-start');
+        
+        dbg('📱 Initializing application...');
+        
+        // 1. Verify DOM is ready
+        if (!document.body) {
+            throw new Error('DOM not ready');
+        }
+        
+        // 2. Load persisted data
+        dbg('📂 Loading persisted data...');
+        loadChecklistData();
+        loadHistory();
+        setupCrossTabSync();
+        
+        // 3. Initialize UI components
+        dbg('🎨 Initializing UI components...');
+        initializeEventListeners();
+        
+        // 4. Register global functions
+        dbg('🔗 Registering global API...');
+        registerGlobalAPI();
+        
+        performanceMonitor.mark('app-init-end');
+        const initTime = performanceMonitor.measure('initialization', 'app-init-start', 'app-init-end');
+        
+        dbg(`✅ Application ready (${initTime.toFixed(2)}ms)`);
+        console.log('🎮 Pokémon Wheel Spinner v6.0 initialized successfully');
+        
+    } catch (error) {
+        errorBoundary.captureError({
+            type: 'initialization',
+            message: error.message,
+            stack: error.stack,
+        });
+        console.error('❌ Initialization failed:', error);
+    }
+}
+
+/**
+ * Initialize all event listeners
+ * @private
+ */
+function initializeEventListeners() {
+    // Selection screen input
+    const commandInput = document.getElementById('selectionCommandInput');
+    if (commandInput) {
+        commandInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSelectionCommand(e.target.value);
+            }
+        });
+    }
+
+    // Category buttons for search
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // Region/generation buttons
+    const regionBtns = document.querySelectorAll('.region-btn');
+    regionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            regionBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // Search button
+    const searchBtn = document.getElementById('searchBtn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            if (window.searchPokemon) window.searchPokemon();
+        });
+    }
+
+    dbg('✅ Event listeners registered');
+}
+
+/**
+ * Register all global API functions
+ * @private
+ */
+function registerGlobalAPI() {
+    window.initApp = initApp;
+    window.performanceMonitor = performanceMonitor;
+    window.errorBoundary = errorBoundary;
+    window.apiClient = apiClient;
+    
+    dbg('✅ Global API registered');
+}
+
+/**
+ * Handle selection screen commands
+ * @param {string} command - User command
+ */
+function handleSelectionCommand(command) {
+    const cmd = command.toLowerCase().trim();
+    
+    if (cmd === 'list') {
+        if (window.openListView) window.openListView();
+    } else if (cmd === 'search') {
+        document.getElementById('selectionScreen').style.display = 'none';
+        document.getElementById('pokedexScreen').style.display = 'flex';
+    } else if (cmd === 'stats') {
+        performanceMonitor.showDashboard();
+    } else if (cmd === 'clear-cache') {
+        apiClient.clear();
+        dbg('✅ Cache cleared');
+    }
+}
+
+// ============================================================================
+// STARTUP SEQUENCE
+// ============================================================================
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    // DOM already loaded
+    initApp().catch(err => console.error('Init error:', err));
+}
+
+// Fallback initialization for legacy code
 document.addEventListener('DOMContentLoaded', function() {
     const commandInput = document.getElementById('commandInput');
     const checklistBackBtn = document.getElementById('checklistBackBtn');
@@ -5018,7 +5382,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const mainScreen = document.getElementById('mainScreen');
             const selectionScreen = document.getElementById('selectionScreen');
             
-            if (value === 'list') {
+            if (value === 'clear' || value === 'reset') {
+                if (confirm('Clear all data and reset?')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            } else if (value === 'list') {
                 // Show checklist screen - hide everything else
                 selectionScreen.style.display = 'none';
                 mainScreen.style.display = 'none';
@@ -5026,6 +5395,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Initialize checklist if not already done
                 const checklistContainer = document.getElementById('checklistContainer');
+
                 if (checklistContainer && checklistContainer.children.length === 0) {
                     populateChecklist('all');
                 }
@@ -5052,8 +5422,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Initialize selection screen command input listener
-// Global listener for 'l' key to show list option
+// ============================================================================
+// KEYBOARD SHORTCUTS
+// ============================================================================
+
 document.addEventListener('keydown', function(e) {
     const char = e.key.toLowerCase();
     const selectionScreen = document.getElementById('selectionScreen');

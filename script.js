@@ -4043,19 +4043,55 @@ const pokemonByGeneration = {
 
 let currentChecklistRegion = 'all';
 let checklistData = {};
+let currentUser = 'zach'; // Default user
+let currentRegion = 'all'; // Track current region for switching users
+
+// Get localStorage key for current user
+function getStorageKey() {
+    return `pokemonChecklist_${currentUser}`;
+}
 
 // Load checklist data from localStorage
 function loadChecklistData() {
-    const saved = localStorage.getItem('pokemonChecklist');
+    const saved = localStorage.getItem(getStorageKey());
     if (saved) {
         checklistData = JSON.parse(saved);
+    } else {
+        checklistData = {}; // Start fresh if no data
     }
 }
 
 // Save checklist data to localStorage
 function saveChecklistData() {
-    localStorage.setItem('pokemonChecklist', JSON.stringify(checklistData));
+    localStorage.setItem(getStorageKey(), JSON.stringify(checklistData));
 }
+
+// Get current region
+function getCurrentRegion() {
+    return currentRegion;
+}
+
+// Switch between users
+function switchUser(user) {
+    // Save current user's data
+    saveChecklistData();
+    
+    // Switch to new user
+    currentUser = user;
+    
+    // Update UI
+    document.querySelectorAll('.user-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.user === user);
+    });
+    
+    // Load new user's data
+    loadChecklistData();
+    
+    // Refresh the display
+    displayListView(currentRegion);
+    updateListViewStats();
+}
+window.switchUser = switchUser;
 
 // Open checklist screen
 async function openChecklistScreen() {
@@ -4309,6 +4345,8 @@ async function openListView() {
     document.getElementById('checklistScreen').style.display = 'none';
     console.log('Setting listScreen display to block');
     document.getElementById('listScreen').style.display = 'block';
+    console.log('Loading checklist data from localStorage...');
+    loadChecklistData();
     console.log('Calling displayListView...');
     await displayListView('all');
     console.log('Calling setupListViewEventListeners...');
@@ -4319,7 +4357,8 @@ window.openListView = openListView;
 
 // Display Pokémon list
 async function displayListView(region) {
-    console.log('displayListView called with region:', region);
+    console.log('displayListView called with region:', region, 'for user:', currentUser);
+    currentRegion = region; // Track current region
     const container = document.getElementById('listContainer');
     if (!container) {
         console.error('listContainer not found!');

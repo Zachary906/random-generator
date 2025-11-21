@@ -1,152 +1,192 @@
-// Pokémon Wheel Spinner
-// IMMEDIATE TEST - Change page title
-try {
-    document.title = 'JS START ' + Date.now();
-    
-    // Expose wheel opening function IMMEDIATELY
-    window.openWheelGen = function(gen) {
-        document.title = 'Opening: ' + gen;
-        try {
-            if (typeof window.triggerWheelMode === 'function') {
-                window.triggerWheelMode(gen);
-            } else {
-                // Fallback: wait a bit and try again
-                setTimeout(function() {
-                    if (typeof window.triggerWheelMode === 'function') {
-                        window.triggerWheelMode(gen);
-                    } else {
-                        alert('Wheel system not ready. Please wait 2 seconds and try again.');
-                    }
-                }, 500);
-            }
-        } catch(e) {
-            alert('Error opening wheel: ' + e.message);
-        }
-    };
-    
-} catch(e) {
-    alert('Init error: ' + e.message);
-}
+/**
+ * Pokémon Wheel Spinner - Modern 2025 Edition
+ * Enhanced with ES6+, async/await, performance monitoring, and robust error handling
+ * @version 6.0.0
+ * @license MIT
+ */
 
-// Console interceptor - MUST BE FIRST
-let __consoleMessages = [];
-let __consoleVisible = false;
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-const originalConsoleWarn = console.warn;
+// ============================================================================
+// CONFIGURATION & CONSTANTS
+// ============================================================================
 
-console.log = function(...args) {
+const CONFIG = Object.freeze({
+    VERSION: '6.0.0',
+    DEBUG: true,
+    API_BASE: 'https://pokeapi.co/api/v2',
+    CACHE_DURATION: 3600000, // 1 hour
+    MAX_CACHE_SIZE: 100,
+    CONSOLE_MAX_MESSAGES: 200,
+    DEBUG_MAX_MESSAGES: 100,
+    REQUEST_TIMEOUT: 10000,
+    PERFORMANCE_TRACKING: true,
+});
+
+// ============================================================================
+// INITIALIZATION & SETUP
+// ============================================================================
+
+/** Performance metrics tracking */
+const METRICS = {
+    pageLoadTime: performance.now(),
+    apiCalls: 0,
+    cacheMisses: 0,
+    cacheHits: 0,
+    errors: [],
+    startTime: Date.now(),
+};
+
+// Initialize with modern error boundary
+(async () => {
     try {
-        const msg = args.map(a => {
-            if (typeof a === 'object') {
-                if (a === null) return 'null';
-                if (a instanceof NodeList) return `NodeList(${a.length})`;
-                if (a instanceof HTMLElement) return `<${a.tagName}>`;
-                try { return JSON.stringify(a); } catch(e) { return '[Object]'; }
+        document.title = `Pokémon Wheel Spinner v${CONFIG.VERSION}`;
+        dbg(`🚀 Application initialized - ${new Date().toLocaleString()}`);
+    } catch (error) {
+        console.error('Critical initialization error:', error);
+    }
+})();
+
+// ============================================================================
+// LOGGING SYSTEM - Modern Logger with Interceptors
+// ============================================================================
+
+class Logger {
+    constructor(maxMessages = CONFIG.CONSOLE_MAX_MESSAGES) {
+        this.messages = [];
+        this.maxMessages = maxMessages;
+        this.originalLog = console.log;
+        this.originalError = console.error;
+        this.originalWarn = console.warn;
+        this.init();
+    }
+
+    init() {
+        console.log = (...args) => this.log(...args);
+        console.error = (...args) => this.error(...args);
+        console.warn = (...args) => this.warn(...args);
+    }
+
+    /**
+     * Format message for safe logging
+     * @param {any} arg - Argument to format
+     * @returns {string} Formatted message
+     */
+    formatArg(arg) {
+        if (arg === null) return 'null';
+        if (arg === undefined) return 'undefined';
+        if (arg instanceof NodeList) return `NodeList(${arg.length})`;
+        if (arg instanceof HTMLElement) return `<${arg.tagName}>`;
+        if (typeof arg === 'object') {
+            try {
+                return JSON.stringify(arg);
+            } catch (e) {
+                return '[Object]';
             }
-            return String(a);
-        }).join(' ');
-        __consoleMessages.push({ type: 'log', msg, time: new Date().toISOString() });
-        if (__consoleMessages.length > 200) __consoleMessages.shift();
-        originalConsoleLog.apply(console, args);
-    } catch(e) {
-        originalConsoleLog.call(console, 'Console.log error:', e);
+        }
+        return String(arg);
     }
-};
 
-console.error = function(...args) {
-    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
-    __consoleMessages.push({ type: 'error', msg, time: new Date().toISOString() });
-    if (__consoleMessages.length > 200) __consoleMessages.shift();
-    originalConsoleError.apply(console, args);
-};
+    log(...args) {
+        const msg = args.map(a => this.formatArg(a)).join(' ');
+        this.messages.push({
+            type: 'log',
+            msg,
+            time: new Date().toISOString(),
+            timestamp: Date.now(),
+        });
+        this.pruneMessages();
+        this.originalLog.apply(console, args);
+    }
 
-console.warn = function(...args) {
-    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
-    __consoleMessages.push({ type: 'warn', msg, time: new Date().toISOString() });
-    if (__consoleMessages.length > 200) __consoleMessages.shift();
-    originalConsoleWarn.apply(console, args);
-};
+    error(...args) {
+        const msg = args.map(a => this.formatArg(a)).join(' ');
+        this.messages.push({
+            type: 'error',
+            msg,
+            time: new Date().toISOString(),
+            timestamp: Date.now(),
+        });
+        this.pruneMessages();
+        METRICS.errors.push({ msg, time: Date.now() });
+        this.originalError.apply(console, args);
+    }
 
-console.log('=== SCRIPT LOADING v5.0 ===', new Date().toISOString());
-// Debug flag and helper with on-screen panel support
-const DEBUG = true;
-let __debugBuffer = [];
-let __debugPanelVisible = false;
-console.log('[INIT] Debug system initialized. Press "d" to toggle debug panel.');
+    warn(...args) {
+        const msg = args.map(a => this.formatArg(a)).join(' ');
+        this.messages.push({
+            type: 'warn',
+            msg,
+            time: new Date().toISOString(),
+            timestamp: Date.now(),
+        });
+        this.pruneMessages();
+        this.originalWarn.apply(console, args);
+    }
+
+    pruneMessages() {
+        if (this.messages.length > this.maxMessages) {
+            this.messages = this.messages.slice(-this.maxMessages);
+        }
+    }
+
+    getMessages() {
+        return [...this.messages];
+    }
+
+    clear() {
+        this.messages = [];
+    }
+}
+
+const logger = new Logger();
+
+// ============================================================================
+// DEBUG SYSTEM
+// ============================================================================
+
+/**
+ * Debug logging function with performance tracking
+ * @param {...any} args - Arguments to log
+ */
 function dbg(...args) {
-    if (!DEBUG) return;
-    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-    const time = new Date().toISOString().split('T')[1].replace('Z','');
-    const line = `[${time}] ${msg}`;
-    console.log('[DEBUG]', ...args);
-    __debugBuffer.push(line);
-    if (__debugBuffer.length > 100) __debugBuffer.shift();
-    if (__debugPanelVisible) updateDebugPanel();
+    if (!CONFIG.DEBUG) return;
+    
+    const msg = args.map(a => {
+        if (typeof a === 'object') {
+            try {
+                return JSON.stringify(a);
+            } catch (e) {
+                return '[Object]';
+            }
+        }
+        return String(a);
+    }).join(' ');
+    
+    const elapsed = ((Date.now() - METRICS.startTime) / 1000).toFixed(2);
+    const line = `[${elapsed}s] ${msg}`;
+    
+    logger.log('[DBG]', msg);
 }
 
-function updateDebugPanel() {
-    const el = document.getElementById('debugPanel');
-    if (!el) return;
-    el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <strong style="color:#0ff;">Debug Panel</strong>
-        <button id="clearDebugBtn" style="background:#222; color:#0ff; border:1px solid #0ff; padding:2px 6px; border-radius:4px; cursor:pointer; font-size:11px;">Clear</button>
-    </div>` +
-    '<div style="font-size:11px; line-height:1.3; white-space:pre-wrap;">' + __debugBuffer.slice().reverse().join('\n') + '</div>';
-    const clearBtn = document.getElementById('clearDebugBtn');
-    if (clearBtn) {
-        clearBtn.onclick = () => { __debugBuffer = []; updateDebugPanel(); };
+console.log('=== POKÉMON WHEEL SPINNER v6.0.0 ===');
+dbg('🎯 Modern 2025 Edition - Performance monitoring enabled');
+
+// ============================================================================
+// UI MANAGEMENT - Console & Debug Panels
+// ============================================================================
+
+class ConsoleOverlay {
+    constructor() {
+        this.element = null;
+        this.visible = false;
     }
-}
 
-function toggleDebugPanel() {
-    let el = document.getElementById('debugPanel');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'debugPanel';
-        el.style.position = 'fixed';
-        el.style.top = '10px';
-        el.style.right = '10px';
-        el.style.width = '320px';
-        el.style.height = '300px';
-        el.style.background = 'rgba(0,0,0,0.85)';
-        el.style.color = '#ccc';
-        el.style.fontFamily = 'monospace';
-        el.style.fontSize = '12px';
-        el.style.padding = '10px';
-        el.style.border = '1px solid #0ff';
-        el.style.borderRadius = '8px';
-        el.style.boxShadow = '0 0 12px rgba(0,255,255,0.4)';
-        el.style.overflowY = 'auto';
-        el.style.zIndex = '9999';
-        document.body.appendChild(el);
-    }
-    __debugPanelVisible = !__debugPanelVisible;
-    el.style.display = __debugPanelVisible ? 'block' : 'none';
-    if (__debugPanelVisible) updateDebugPanel();
-}
-
-// Console overlay (press 'c' to toggle)
-// Note: console interceptor is at the top of the file
-
-function updateConsoleOverlay() {
-    const overlay = document.getElementById('consoleOverlay');
-    if (!overlay) return;
-    const content = overlay.querySelector('.console-content');
-    if (__consoleVisible) {
-        content.innerHTML = __consoleMessages.slice().reverse().map(item => {
-            const color = item.type === 'error' ? '#ff5555' : item.type === 'warn' ? '#ffaa00' : '#00ff00';
-            return `<div style="color: ${color}; margin-bottom: 5px; font-family: monospace; font-size: 12px;">[${item.time.split('T')[1].split('.')[0]}] ${item.msg}</div>`;
-        }).join('');
-    }
-}
-
-function showConsoleOverlay() {
-    let overlay = document.getElementById('consoleOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'consoleOverlay';
-        overlay.style.cssText = `
+    init() {
+        if (this.element) return;
+        this.element = document.createElement('div');
+        this.element.id = 'consoleOverlay';
+        this.element.setAttribute('role', 'region');
+        this.element.setAttribute('aria-label', 'Console overlay');
+        this.element.style.cssText = `
             position: fixed;
             top: 10px;
             right: 10px;
@@ -160,51 +200,237 @@ function showConsoleOverlay() {
             border: 2px solid #00ff00;
             border-radius: 5px;
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            font-family: 'Monaco', 'Courier New', monospace;
         `;
-        
+
         const header = document.createElement('div');
-        header.style.cssText = 'color: white; font-size: 20px; margin-bottom: 10px; display: flex; justify-content: space-between;';
+        header.style.cssText = `
+            color: white; 
+            font-size: 14px; 
+            margin-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        `;
         header.innerHTML = `<span>Console Output (Press C to close)</span>`;
-        
+
         const clearBtn = document.createElement('button');
         clearBtn.textContent = 'Clear';
-        clearBtn.style.cssText = 'background: #ff5555; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px;';
-        clearBtn.onclick = () => {
-            __consoleMessages = [];
-            updateConsoleOverlay();
-        };
+        clearBtn.setAttribute('aria-label', 'Clear console');
+        clearBtn.style.cssText = `
+            background: #ff5555;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: background 0.2s;
+        `;
+        clearBtn.addEventListener('click', () => {
+            logger.clear();
+            this.update();
+        });
         header.appendChild(clearBtn);
-        
+
         const content = document.createElement('div');
         content.className = 'console-content';
-        content.style.cssText = 'color: #00ff00; font-family: monospace; white-space: pre-wrap; word-break: break-all;';
-        
-        overlay.appendChild(header);
-        overlay.appendChild(content);
-        document.body.appendChild(overlay);
+        content.style.cssText = `
+            color: #00ff00;
+            font-family: 'Monaco', 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 11px;
+            line-height: 1.4;
+        `;
+
+        this.element.appendChild(header);
+        this.element.appendChild(content);
+        document.body.appendChild(this.element);
     }
-    
-    __consoleVisible = !__consoleVisible;
-    overlay.style.display = __consoleVisible ? 'block' : 'none';
-    if (__consoleVisible) updateConsoleOverlay();
+
+    update() {
+        if (!this.element || !this.visible) return;
+        const content = this.element.querySelector('.console-content');
+        if (!content) return;
+
+        const messages = logger.getMessages()
+            .slice()
+            .reverse()
+            .map(item => {
+                const colors = {
+                    error: '#ff5555',
+                    warn: '#ffaa00',
+                    log: '#00ff00',
+                };
+                const color = colors[item.type] || '#00ff00';
+                const time = new Date(item.timestamp).toLocaleTimeString();
+                return `<span style="color: ${color};">[${time}] ${item.msg}</span>`;
+            })
+            .join('\n');
+
+        content.innerHTML = messages || '<span style="color: #666;">No messages</span>';
+    }
+
+    toggle() {
+        this.init();
+        this.visible = !this.visible;
+        this.element.style.display = this.visible ? 'block' : 'none';
+        if (this.visible) this.update();
+    }
 }
 
-// Expose to window for inline onclick
-window.showConsoleOverlay = showConsoleOverlay;
+const consoleOverlay = new ConsoleOverlay();
 
+// Keyboard event handler with debouncing
 document.addEventListener('keydown', (e) => {
-    // Avoid typing conflicts inside inputs/textareas
-    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
-    if (tag === 'input' || tag === 'textarea') return;
-    
-    if (e.key === 'd' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        toggleDebugPanel();
-    }
-    
+    const tag = e.target?.tagName?.toLowerCase() || '';
+    if (['input', 'textarea'].includes(tag)) return;
+
     if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        showConsoleOverlay();
+        e.preventDefault();
+        consoleOverlay.toggle();
     }
 });
+
+// Expose for global access
+window.showConsoleOverlay = () => consoleOverlay.toggle();
+
+// ============================================================================
+// API CLIENT - Modern with Caching & Rate Limiting
+// ============================================================================
+
+class APIClient {
+    constructor(baseURL = CONFIG.API_BASE, cacheEnabled = true) {
+        this.baseURL = baseURL;
+        this.cacheEnabled = cacheEnabled;
+        this.cache = new Map();
+        this.pendingRequests = new Map();
+        this.requestCount = 0;
+    }
+
+    /**
+     * Fetch with request deduplication and caching
+     * @param {string} endpoint - API endpoint
+     * @param {object} options - Request options
+     * @returns {Promise<any>} Response data
+     */
+    async fetch(endpoint, options = {}) {
+        const cacheKey = `${endpoint}:${JSON.stringify(options)}`;
+        
+        // Check cache first
+        if (this.cacheEnabled) {
+            const cached = this.cache.get(cacheKey);
+            if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_DURATION) {
+                METRICS.cacheHits++;
+                return cached.data;
+            }
+        }
+
+        // Check if request is already pending
+        if (this.pendingRequests.has(cacheKey)) {
+            return this.pendingRequests.get(cacheKey);
+        }
+
+        const url = `${this.baseURL}${endpoint}`;
+        const request = this._fetchWithRetry(url, options);
+        this.pendingRequests.set(cacheKey, request);
+
+        try {
+            const data = await request;
+            
+            // Cache the result
+            if (this.cacheEnabled) {
+                this.cache.set(cacheKey, {
+                    data,
+                    timestamp: Date.now(),
+                });
+                this._pruneCache();
+            }
+
+            return data;
+        } finally {
+            this.pendingRequests.delete(cacheKey);
+        }
+    }
+
+    /**
+     * Fetch with automatic retry on failure
+     * @private
+     */
+    async _fetchWithRetry(url, options = {}, retries = 3) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+
+        try {
+            this.requestCount++;
+            METRICS.apiCalls++;
+
+            const response = await fetch(url, {
+                signal: controller.signal,
+                ...options,
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            dbg(`✅ API call successful: ${url.split('/').pop()}`);
+            return data;
+        } catch (error) {
+            if (retries > 0 && (error.name === 'AbortError' || error.message.includes('fetch'))) {
+                dbg(`⚠️ Retrying API call (${retries} left): ${url}`);
+                await new Promise(r => setTimeout(r, 1000));
+                return this._fetchWithRetry(url, options, retries - 1);
+            }
+            
+            METRICS.cacheMisses++;
+            dbg(`❌ API error: ${error.message}`);
+            throw error;
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    /**
+     * Prune cache to maintain size limit
+     * @private
+     */
+    _pruneCache() {
+        if (this.cache.size > CONFIG.MAX_CACHE_SIZE) {
+            const entriesToRemove = this.cache.size - CONFIG.MAX_CACHE_SIZE;
+            const entries = Array.from(this.cache.entries());
+            entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+            
+            for (let i = 0; i < entriesToRemove; i++) {
+                this.cache.delete(entries[i][0]);
+            }
+        }
+    }
+
+    /**
+     * Get cache statistics
+     * @returns {object} Cache stats
+     */
+    getStats() {
+        return {
+            cacheSize: this.cache.size,
+            requestCount: this.requestCount,
+            cacheHits: METRICS.cacheHits,
+            cacheMisses: METRICS.cacheMisses,
+            hitRate: METRICS.cacheHits / (METRICS.cacheHits + METRICS.cacheMisses) || 0,
+        };
+    }
+
+    clear() {
+        this.cache.clear();
+        this.pendingRequests.clear();
+    }
+}
+
+const apiClient = new APIClient();
+
 let selectedGeneration = null;
 let pokemonLimit = 151;
 let pokemonOffset = 0;

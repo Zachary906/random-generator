@@ -3,19 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokémon Wheel Spinner</title>
+    <meta name="description" content="Pokémon Wheel Spinner - A modern interactive Pokémon random selector with search, checklist, and advanced features">
+    <meta name="theme-color" content="#667eea">
+    <meta name="color-scheme" content="dark">
+    <title>Pokémon Wheel Spinner v6.0 - 2025 Edition</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚪</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <!-- Selection Screen -->
-    <div id="selectionScreen" class="selection-screen">
-        <div class="selection-container">
-            <h1 class="selection-title">Choose Your Pokémon Generation</h1>
-            <div id="debugInfo" style="position: fixed; top: 50px; right: 10px; background: rgba(0,0,0,0.9); color: lime; padding: 10px; font-family: monospace; font-size: 12px; max-width: 300px; z-index: 99999; border: 2px solid lime; display: none;"></div>
-            <button onclick="if(window.testWheelOpen){window.testWheelOpen()}else{alert('Not ready')}}" style="position: fixed; top: 100px; right: 10px; z-index: 99999; background: #00ff00; color: black; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; display: none;">TEST GEN 1</button>
-            <button id="mainShinyToggle" class="main-shiny-toggle">✨ Toggle Shiny Mode</button>
-            <button onclick="if(window.showConsoleOverlay){window.showConsoleOverlay()}else{alert('Console not loaded yet')}" style="position: fixed; top: 10px; right: 10px; z-index: 99999; background: #ff0000; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold;">CONSOLE</button>
-            <div class="wheel-options">
+<body role="application">
+    <!-- Main Navigation Region -->
+    <header class="app-header" role="banner">
+        <div class="header-content">
+            <h1 class="app-title">Pokémon Wheel Spinner</h1>
+            <p class="app-version">v6.0 - 2025 Edition</p>
+            <nav class="header-nav">
+                <button 
+                    id="consoleBtn" 
+                    class="header-btn" 
+                    aria-label="Toggle console (Press C)"
+                    onclick="if(window.showConsoleOverlay){window.showConsoleOverlay()}">
+                    🖥️ Console
+                </button>
+                <button 
+                    id="statsBtn" 
+                    class="header-btn" 
+                    aria-label="View performance statistics"
+                    onclick="if(window.showStats){window.showStats()}">
+                    📊 Stats
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main role="main" class="app-main">
+        <!-- Selection Screen -->
+        <section id="selectionScreen" class="screen screen--selection">
+            <article class="selection-container">
+                <h2 class="selection-title">Choose Your Pokémon Adventure</h2>
+                
+                <!-- Search Input -->
+                <div class="search-wrapper">
+                    <label for="selectionCommandInput" class="sr-only">Search or navigate</label>
+                    <input 
+                        type="text" 
+                        id="selectionCommandInput" 
+                        class="selection-command-input" 
+                        placeholder="Type 'list' to show list option, 'search' for Pokédex..." 
+                        autocomplete="off"
+                        aria-describedby="search-help">
+                    <small id="search-help" class="search-help">Press Enter or click a region to get started</small>
+                </div>
+
+                <!-- Generation Grid -->
+                <div class="wheel-options-grid" role="list">
+                    <!-- Generations 1-9 (Dynamic, will be rendered by JavaScript) -->
+                    <div class="wheel-option" role="listitem" data-generation="1" tabindex="0" aria-label="Generation 1 - Kanto Region">
+                        <div class="option-icon" aria-hidden="true">🔴</div>
+                        <h3>Generation 1</h3>
+                        <p>Kanto Region</p>
+                        <p class="gen-range">#1 - #151</p>
+                    </div>
+                    
+                    <!-- Special Collections (will follow) -->
+                </div>
+
+                <!-- Quick Actions -->
+                <aside class="quick-actions">
+                    <button id="mainShinyToggle" class="action-btn action-btn--shiny" aria-pressed="false">
+                        ✨ Toggle Shiny Mode
+                    </button>
+                </aside>
+            </article>
+        </section>
+
+        <!-- Pokédex Search Screen -->
+        <section id="pokedexScreen" class="screen screen--pokedex" style="display: none;">
+            <article class="pokedex-container">
+                <header class="screen-header">
+                    <button id="pokedexBackBtn" class="back-button" aria-label="Back to main menu">← Back</button>
+                    <h2 class="pokedex-title">🔍 Pokédex Search</h2>
+                </header>
+                
+                <!-- Search Categories -->
+                <nav class="search-categories" aria-label="Search categories">
+                    <button class="category-btn active" data-category="none" disabled aria-current="page">
+                        🔍 Select Category
+                    </button>
+                    <button class="category-btn" data-category="all">🌐 All</button>
+                    <button class="category-btn" data-category="pokemon">🎮 Pokémon</button>
+                    <button class="category-btn" data-category="paldea">🍃 Paldea</button>
+                    <button class="category-btn" data-category="moves">⚔️ Moves</button>
+                    <button class="category-btn" data-category="abilities">✨ Abilities</button>
+                    <button class="category-btn" data-category="items">🎒 Items</button>
+                    <button class="category-btn" data-category="types">🔥 Types</button>
+                </nav>
+                
+                <!-- Search Form -->
+                <form class="search-form" onsubmit="event.preventDefault(); if(window.searchPokemon) window.searchPokemon();">
+                    <div class="search-input-group">
+                        <label for="pokemonSearch" class="sr-only">Search Pokémon</label>
+                        <input 
+                            type="text" 
+                            id="pokemonSearch" 
+                            class="pokemon-search" 
+                            placeholder="Enter name or number..."
+                            autocomplete="off"
+                            aria-label="Search Pokémon by name or number">
+                        <button type="submit" id="searchBtn" class="search-button">Search</button>
+                        <button type="button" id="randomSuggestBtn" class="search-button search-button--random" onclick="if(window.randomSuggest) window.randomSuggest();">
+                            🎲 Random
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Results Area -->
+                <section id="pokedexResult" class="pokedex-result" role="region" aria-label="Search results" aria-live="polite">
+                    <!-- Results rendered here -->
+                </section>
+            </article>
+        </section>
+
+        <!-- Pokémon List Screen -->
+        <section id="listScreen" class="screen screen--list" style="display: none;">
+            <article class="list-container">
+                <header class="screen-header">
+                    <button id="listBackBtn" class="back-button" aria-label="Back to main menu">← Back</button>
+                    <h2 class="list-title">📋 Pokémon List</h2>
+                </header>
+
+                <!-- User Selector -->
+                <nav class="user-selector" aria-label="Select user list">
+                    <button class="user-btn active" data-user="zach" onclick="switchUser('zach')" aria-pressed="true">
+                        👤 Zach
+                    </button>
+                    <button class="user-btn" data-user="payten" onclick="switchUser('payten')" aria-pressed="false">
+                        👤 Payten
+                    </button>
+                </nav>
+
+                <!-- Advanced Controls -->
+                <div class="advanced-controls" role="toolbar" aria-label="List controls">
+                    <div class="control-group">
+                        <button class="control-btn" onclick="setFilter('caught', true)" title="Show only caught Pokémon">
+                            ✅ Caught
+                        </button>
+                        <button class="control-btn" onclick="setFilter('caught', false)" title="Show only uncaught Pokémon">
+                            ❌ Uncaught
+                        </button>
+                        <button class="control-btn" onclick="clearFilters()" title="Clear all filters">
+                            🔄 All
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <button class="control-btn" onclick="window.undo && window.undo()" title="Undo last change">
+                            ↶ Undo
+                        </button>
+                        <button class="control-btn" onclick="window.redo && window.redo()" title="Redo last change">
+                            ↷ Redo
+                        </button>
+                        <button class="control-btn" onclick="window.createManualBackup && window.createManualBackup()">
+                            💾 Backup
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Region Filter -->
+                <nav class="region-selector" aria-label="Filter by region">
+                    <button class="region-btn active" data-region="all">All Pokémon</button>
+                    <button class="region-btn" data-region="1">Gen 1: Kanto</button>
+                    <button class="region-btn" data-region="2">Gen 2: Johto</button>
+                    <button class="region-btn" data-region="3">Gen 3: Hoenn</button>
+                    <button class="region-btn" data-region="4">Gen 4: Sinnoh</button>
+                    <button class="region-btn" data-region="5">Gen 5: Unova</button>
+                </nav>
+
+                <!-- Statistics -->
+                <section class="list-stats" aria-label="Progress statistics">
+                    <span id="listCaughtCount">0</span> / 
+                    <span id="listTotalCount">0</span> Pokémon collected
+                </section>
+
+                <!-- List Container -->
+                <section id="listContainer" class="list-items-container" role="region" aria-label="Pokémon list">
+                    <!-- Items rendered here -->
+                </section>
+            </article>
+        </section>
+
+        <!-- Main Wheel Screen -->
+        <section id="mainScreen" class="screen screen--wheel" style="display: none;">
+            <article class="wheel-article">
+                <header class="screen-header">
+                    <button id="backBtn" class="back-button" aria-label="Back to menu">← Change Wheel</button>
+                    <h2 class="wheel-title">Pokémon Wheel Spinner</h2>
+                </header>
+                
+                <div class="wheel-container" role="region" aria-label="Interactive wheel">
+                    <div class="pointer" aria-hidden="true"></div>
+                    <canvas id="wheelCanvas" width="600" height="600" role="img" aria-label="Pokémon wheel"></canvas>
+                    <div class="click-instruction">Click to spin!</div>
+                </div>
+
+                <section id="loading" class="loading" aria-live="polite">
+                    Loading Pokémon data...
+                </section>
+            </article>
+        </section>
+    </main>
+
+    <!-- Result Modal Dialog -->
+    <dialog id="resultModal" class="modal">
+        <div class="modal-content" role="document">
+            <div id="result" class="result" role="region" aria-label="Wheel result">
+                <!-- Result rendered here -->
+            </div>
+            <button id="closeModal" class="modal-button" onclick="if(window.closeResultModal) window.closeResultModal()">
+                CLOSE
+            </button>
+        </div>
+    </dialog>
+
+    <!-- Footer -->
+    <footer class="app-footer" role="contentinfo">
+        <p>Pokémon data from <a href="https://pokeapi.co" target="_blank" rel="noopener noreferrer">PokéAPI v2</a></p>
+        <p><small>Pokémon © Nintendo, Game Freak, and The Pokémon Company</small></p>
+    </footer>
+
+    <!-- Script Loading -->
+    <script>
+        // Modern script loading with cache busting
+        (function() {
+            const scriptUrl = new URL('script.js', import.meta.url || window.location);
+            scriptUrl.searchParams.append('v', '6.0.0');
+            scriptUrl.searchParams.append('t', Date.now());
+            
+            const script = document.createElement('script');
+            script.src = scriptUrl.toString();
+            script.type = 'text/javascript';
+            script.defer = true;
+            
+            script.onload = () => {
+                console.log('✅ Script.js loaded successfully');
+                if (window.initApp) window.initApp();
+            };
+            
+            script.onerror = () => {
+                console.error('❌ Failed to load script.js');
+                document.body.innerHTML += '<div style="color: red; padding: 20px;">Failed to load application. Please refresh the page.</div>';
+            };
+            
+            document.body.appendChild(script);
+        })();
+    </script>
+</body>
+</html>
                 <div class="wheel-option" data-generation="1" onclick="if(window.openWheelGen){window.openWheelGen('1')}">
                     <div class="option-icon">🔴</div>
                     <h2>Generation 1</h2>

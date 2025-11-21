@@ -1679,9 +1679,16 @@ const testQuery = document.querySelectorAll('.wheel-option');
 console.log('TOTAL WHEELS IN DOM:', testQuery.length);
 showDebug('WHEELS IN DOM: ' + testQuery.length);
 
-const selectionScreen = document.getElementById('selectionScreen');
-const mainScreen = document.getElementById('mainScreen');
-const pokedexScreen = document.getElementById('pokedexScreen');
+// Use getters instead of constants so DOM elements are always fresh
+const getSelectionScreen = () => document.getElementById('selectionScreen');
+const getMainScreen = () => document.getElementById('mainScreen');
+const getPokedexScreen = () => document.getElementById('pokedexScreen');
+
+// Keep these for backwards compatibility
+const selectionScreen = getSelectionScreen();
+const mainScreen = getMainScreen();
+const pokedexScreen = getPokedexScreen();
+
 const wheelOptions = document.querySelectorAll('.wheel-option:not(#pokedexOption)');
 const pokedexOption = document.getElementById('pokedexOption');
 
@@ -3733,10 +3740,18 @@ function triggerWheelMode(generation) {
     }
     selectedGeneration = subtitle;
     console.log('About to hide selectionScreen and show mainScreen');
+    const sel = getSelectionScreen();
+    const main = getMainScreen();
+    console.log('selectionScreen element:', sel);
+    console.log('mainScreen element:', main);
+    if (!sel || !main) {
+        console.error('ERROR: Cannot find selectionScreen or mainScreen elements!');
+        return;
+    }
     console.log('selectionScreen.style.display will be set to: none');
     console.log('mainScreen.style.display will be set to: flex');
-    selectionScreen.style.display = 'none';
-    mainScreen.style.display = 'flex';
+    sel.style.display = 'none';
+    main.style.display = 'flex';
     console.log('Screen visibility changed');
     const subEl = document.querySelector('.subtitle');
     if (subEl) subEl.textContent = subtitle;
@@ -3974,8 +3989,10 @@ function handleListItemCheck(element) {
 // Back button functionality
 function backToSelection() {
     console.log('Returning to selection screen');
-    mainScreen.style.display = 'none';
-    selectionScreen.style.display = 'flex';
+    const main = getMainScreen();
+    const sel = getSelectionScreen();
+    if (main) main.style.display = 'none';
+    if (sel) sel.style.display = 'flex';
     
     // Sync the main screen toggle button with current state
     if (mainShinyToggleBtn) {

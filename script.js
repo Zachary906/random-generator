@@ -1159,7 +1159,9 @@ async function searchPokemon() {
     }
     
     // Route to appropriate search function based on category
-    if (currentSearchCategory === 'pokemon') {
+    if (currentSearchCategory === 'all') {
+        await searchAllCategories(query);
+    } else if (currentSearchCategory === 'pokemon') {
         await searchPokemonCategory(query);
     } else if (currentSearchCategory === 'moves') {
         await searchMoves(query);
@@ -1175,6 +1177,378 @@ async function searchPokemon() {
         await searchTMs(query);
     } else if (currentSearchCategory === 'gmax') {
         await searchGMaxMoves(query);
+    }
+}
+
+// Search across all categories simultaneously
+async function searchAllCategories(query) {
+    if (!query) {
+        pokedexResult.innerHTML = '<p class="pokedex-error">Please enter a search term</p>';
+        return;
+    }
+    
+    query = query.toLowerCase().trim();
+    pokedexResult.innerHTML = '<p class="pokedex-placeholder">Searching all categories...</p>';
+    
+    try {
+        // Run all searches in parallel
+        const [pokemonResults, moveResults, abilityResults, itemResults, typeResults, pokeBallResults, tmResults, gmaxResults] = await Promise.all([
+            searchPokemonCategoryAll(query),
+            searchMovesAll(query),
+            searchAbilitiesAll(query),
+            searchItemsAll(query),
+            searchTypesAll(query),
+            searchPokeballsAll(query),
+            searchTMsAll(query),
+            searchGMaxMovesAll(query)
+        ]);
+        
+        // Combine all results
+        let totalResults = 0;
+        let html = '<div style="padding: 20px;">';
+        
+        if (pokemonResults.length > 0) {
+            totalResults += pokemonResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px;">🎮 Pokémon (${pokemonResults.length})</h3><div style="display: grid; gap: 8px;">${pokemonResults.map(p => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${p.name}'; currentSearchCategory='pokemon'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${p.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (moveResults.length > 0) {
+            totalResults += moveResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 10px;">⚔️ Moves (${moveResults.length})</h3><div style="display: grid; gap: 8px;">${moveResults.map(m => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${m.name}'; currentSearchCategory='moves'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #ff6b6b 0%, #ff2d55 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${m.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (abilityResults.length > 0) {
+            totalResults += abilityResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #ffd700; border-bottom: 2px solid #ffd700; padding-bottom: 10px;">✨ Abilities (${abilityResults.length})</h3><div style="display: grid; gap: 8px;">${abilityResults.map(a => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${a.name}'; currentSearchCategory='abilities'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: black; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${a.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (itemResults.length > 0) {
+            totalResults += itemResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #4ecdc4; border-bottom: 2px solid #4ecdc4; padding-bottom: 10px;">🎒 Items (${itemResults.length})</h3><div style="display: grid; gap: 8px;">${itemResults.map(i => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${i.name}'; currentSearchCategory='items'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${i.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (typeResults.length > 0) {
+            totalResults += typeResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #9b59b6; border-bottom: 2px solid #9b59b6; padding-bottom: 10px;">🔥 Types (${typeResults.length})</h3><div style="display: grid; gap: 8px;">${typeResults.map(t => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${t.name}'; currentSearchCategory='types'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${t.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (pokeBallResults.length > 0) {
+            totalResults += pokeBallResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #e74c3c; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;">⚾ Poké Balls (${pokeBallResults.length})</h3><div style="display: grid; gap: 8px;">${pokeBallResults.map(p => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${p.name}'; currentSearchCategory='pokeballs'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${p.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (tmResults.length > 0) {
+            totalResults += tmResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 10px;">📀 TMs (${tmResults.length})</h3><div style="display: grid; gap: 8px;">${tmResults.map(t => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${t.name}'; currentSearchCategory='tms'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${t.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        if (gmaxResults.length > 0) {
+            totalResults += gmaxResults.length;
+            html += `<div style="margin-bottom: 20px;"><h3 style="color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 10px;">💥 G-Max Moves (${gmaxResults.length})</h3><div style="display: grid; gap: 8px;">${gmaxResults.map(g => `<button class="suggestion-btn" onclick="document.getElementById('pokemonSearch').value='${g.name}'; currentSearchCategory='gmax'; searchPokemon();" style="padding: 10px; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: capitalize;">${g.name.replace('-', ' ')}</button>`).join('')}</div></div>`;
+        }
+        
+        html += '</div>';
+        
+        if (totalResults === 0) {
+            pokedexResult.innerHTML = `<p class="pokedex-error">No results found for "${query}" in any category</p>`;
+        } else {
+            pokedexResult.innerHTML = `<p style="text-align: center; font-weight: bold; color: #667eea; margin-bottom: 20px;">Found ${totalResults} total results</p>${html}`;
+        }
+    } catch (error) {
+        console.error('Error searching all categories:', error);
+        pokedexResult.innerHTML = '<p class="pokedex-error">Error searching categories. Please try again.</p>';
+    }
+}
+
+// Helper search functions that return results instead of displaying them
+async function searchPokemonCategoryAll(query) {
+    try {
+        const listResponse = await fetch('https://pokeapi.co/api/v2/pokemon?limit=10000');
+        const listData = await listResponse.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const p of listData.results) {
+            const pName = p.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (pName.startsWith(queryFormatted)) {
+                startsWith.push(p);
+            } else if (pName.includes(queryFormatted)) {
+                contains.push(p);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < pName.length && queryIndex < queryFormatted.length; i++) {
+                    if (pName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(p);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchMovesAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/move?limit=1000');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const move of data.results) {
+            const moveName = move.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (moveName.startsWith(queryFormatted)) {
+                startsWith.push(move);
+            } else if (moveName.includes(queryFormatted)) {
+                contains.push(move);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < moveName.length && queryIndex < queryFormatted.length; i++) {
+                    if (moveName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(move);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchAbilitiesAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/ability?limit=1000');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const ability of data.results) {
+            const abilityName = ability.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (abilityName.startsWith(queryFormatted)) {
+                startsWith.push(ability);
+            } else if (abilityName.includes(queryFormatted)) {
+                contains.push(ability);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < abilityName.length && queryIndex < queryFormatted.length; i++) {
+                    if (abilityName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(ability);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchItemsAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/item?limit=1000');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const item of data.results) {
+            const itemName = item.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (itemName.startsWith(queryFormatted)) {
+                startsWith.push(item);
+            } else if (itemName.includes(queryFormatted)) {
+                contains.push(item);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < itemName.length && queryIndex < queryFormatted.length; i++) {
+                    if (itemName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(item);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchTypesAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/type');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const type of data.results) {
+            const typeName = type.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (typeName.startsWith(queryFormatted)) {
+                startsWith.push(type);
+            } else if (typeName.includes(queryFormatted)) {
+                contains.push(type);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < typeName.length && queryIndex < queryFormatted.length; i++) {
+                    if (typeName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(type);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchPokeballsAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/item-category/34');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const ball of data.items) {
+            const ballName = ball.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (ballName.startsWith(queryFormatted)) {
+                startsWith.push(ball);
+            } else if (ballName.includes(queryFormatted)) {
+                contains.push(ball);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < ballName.length && queryIndex < queryFormatted.length; i++) {
+                    if (ballName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(ball);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchTMsAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/item-category/19');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const tm of data.items) {
+            const tmName = tm.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (tmName.startsWith(queryFormatted)) {
+                startsWith.push(tm);
+            } else if (tmName.includes(queryFormatted)) {
+                contains.push(tm);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < tmName.length && queryIndex < queryFormatted.length; i++) {
+                    if (tmName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(tm);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+async function searchGMaxMovesAll(query) {
+    try {
+        const response = await fetch('https://pokeapi.co/api/v2/move?limit=1000');
+        const data = await response.json();
+        
+        const startsWith = [];
+        const contains = [];
+        const fuzzyMatches = [];
+        
+        for (const move of data.results) {
+            // Filter for G-Max moves (contain "g-max" or "dynamax")
+            if (!move.name.includes('g-max') && !move.name.includes('dynamax')) continue;
+            
+            const moveName = move.name.replace('-', ' ');
+            const queryFormatted = query.replace('-', ' ');
+            
+            if (moveName.startsWith(queryFormatted)) {
+                startsWith.push(move);
+            } else if (moveName.includes(queryFormatted)) {
+                contains.push(move);
+            } else {
+                let queryIndex = 0;
+                for (let i = 0; i < moveName.length && queryIndex < queryFormatted.length; i++) {
+                    if (moveName[i] === queryFormatted[queryIndex]) {
+                        queryIndex++;
+                    }
+                }
+                if (queryIndex === queryFormatted.length) {
+                    fuzzyMatches.push(move);
+                }
+            }
+        }
+        
+        return [...startsWith, ...contains, ...fuzzyMatches].slice(0, 10);
+    } catch {
+        return [];
     }
 }
 

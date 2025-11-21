@@ -78,8 +78,8 @@ class YearLockdownSystem {
         // Display lockdown overlay
         this.showLockdownOverlay();
         
-        // Prevent all interactions
-        this.disableAllInteractions();
+        // Prevent all interactions (DISABLED for development)
+        // this.disableAllInteractions();
         
         dbg('🔒 Application locked - Year update required');
     }

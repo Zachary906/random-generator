@@ -1064,6 +1064,7 @@ categoryBtns.forEach(btn => {
         const placeholders = {
             'none': 'Select a category and search...',
             'pokemon': 'Enter Pokémon name or number...',
+            'paldea': 'Browse all Paldea Pokémon...',
             'moves': 'Enter move name or browse all...',
             'abilities': 'Enter ability name or browse all...',
             'items': 'Enter item name or browse all...',
@@ -1095,6 +1096,10 @@ categoryBtns.forEach(btn => {
             case 'tms':
                 dbg('Auto-loading TMs');
                 searchTMs('');
+                break;
+            case 'paldea':
+                dbg('Auto-loading Paldea Pokémon');
+                searchPaldeaPokemon('');
                 break;
             case 'moves':
                 dbg('Auto-loading moves limited batch');
@@ -1163,6 +1168,8 @@ async function searchPokemon() {
         await searchAllCategories(query);
     } else if (currentSearchCategory === 'pokemon') {
         await searchPokemonCategory(query);
+    } else if (currentSearchCategory === 'paldea') {
+        await searchPaldeaPokemon(query);
     } else if (currentSearchCategory === 'moves') {
         await searchMoves(query);
     } else if (currentSearchCategory === 'abilities') {
@@ -2075,6 +2082,7 @@ window.searchAbilities = searchAbilities;
 window.showAbilityDetail = showAbilityDetail;
 window.searchItems = searchItems;
 window.showItemDetail = showItemDetail;
+window.searchPaldeaPokemon = searchPaldeaPokemon;
 window.searchTypes = searchTypes;
 window.showTypeDetail = showTypeDetail;
 window.searchPokeballs = searchPokeballs;
@@ -2407,6 +2415,71 @@ function showTMDetail(tmId) {
             <button onclick="window.searchTMs('')" style="margin-top: 25px; padding: 12px 25px; background: rgba(255,255,255,0.3); color: white; border: 2px solid white; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1rem;">← Back to TMs</button>
         </div>
     `;
+}
+
+// Search Paldea Pokémon specifically
+async function searchPaldeaPokemon(query) {
+    const pokedexResult = document.getElementById('pokedexResult');
+    pokedexResult.innerHTML = '<p class="pokedex-placeholder">Loading Paldea Pokémon...</p>';
+    
+    try {
+        // Paldea region: Generation 9 (IDs 906-1025)
+        const paldeaRange = pokemonByGeneration[9];
+        const paldealPokemonIds = [];
+        
+        for (let id = paldeaRange.start; id <= paldeaRange.end; id++) {
+            paldealPokemonIds.push(id);
+        }
+        
+        // Fetch all Paldea Pokémon
+        const fetchPromises = paldealPokemonIds.map(id => 
+            fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
+                .then(r => r.json())
+                .catch(() => null)
+        );
+        
+        const pokemonData = await Promise.all(fetchPromises);
+        let paldealPokemon = pokemonData.filter(p => p !== null);
+        
+        // Filter by search query if provided
+        if (query && query.trim()) {
+            const searchTerm = query.toLowerCase();
+            paldealPokemon = paldealPokemon.filter(p => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                p.id.toString().includes(searchTerm)
+            );
+        }
+        
+        if (paldealPokemon.length === 0) {
+            pokedexResult.innerHTML = `<p class="pokedex-error">No Paldea Pokémon found matching "${query}"</p>`;
+            return;
+        }
+        
+        // Display as grid
+        pokedexResult.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px; color: #667eea; font-weight: bold;">
+                Found ${paldealPokemon.length} Paldea Pokémon
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; max-height: 600px; overflow-y: auto;">
+                ${paldealPokemon.map(p => {
+                    const sprite = p.sprites.other['official-artwork'].front_default || p.sprites.front_default;
+                    return `
+                    <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); padding: 15px; border-radius: 15px; cursor: pointer; transition: transform 0.2s;" 
+                         onclick="window.searchPokemonForRelated('${p.name}')"
+                         onmouseover="this.style.transform='translateY(-5px)'" 
+                         onmouseout="this.style.transform='translateY(0)'">
+                        ${sprite ? `<img src="${sprite}" alt="${p.name}" style="width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px;">` : ''}
+                        <div style="font-weight: bold; color: #667eea; text-transform: capitalize; margin-bottom: 5px;">${p.name.replace('-', ' ')}</div>
+                        <div style="font-size: 0.85rem; color: #999;">#${String(p.id).padStart(4, '0')}</div>
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error searching Paldea Pokémon:', error);
+        pokedexResult.innerHTML = '<p class="pokedex-error">Error loading Paldea Pokémon</p>';
+    }
 }
 
 async function searchTypes(query) {

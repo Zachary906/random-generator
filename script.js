@@ -4120,6 +4120,32 @@ async function populateChecklist(region) {
         </div>
     `).join('');
     
+    // Setup event listeners AFTER rendering
+    container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', handleCheckboxChange);
+    });
+    
+    container.querySelectorAll('label').forEach(label => {
+        label.addEventListener('click', function(e) {
+            e.preventDefault();
+            const checkbox = this.previousElementSibling;
+            if (checkbox && checkbox.tagName === 'INPUT') {
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+    
+    container.querySelectorAll('.checklist-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+    
     updateChecklistStats();
 }
 

@@ -1658,10 +1658,12 @@ console.log('DOM readyState:', document.readyState);
 function showDebug(msg) {
     const debugDiv = document.getElementById('debugInfo');
     if (debugDiv) {
+        debugDiv.style.display = 'block'; // Show debug panel
         debugDiv.innerHTML += msg + '<br>';
         debugDiv.scrollTop = debugDiv.scrollHeight; // Auto-scroll
     } else {
         console.error('debugInfo div not found!');
+        console.log('Debug message:', msg);
     }
 }
 

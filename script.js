@@ -4299,10 +4299,14 @@ document.addEventListener('keydown', function(e) {
 
 // Open list view screen
 async function openListView() {
-    hideAllScreens();
+    document.getElementById('selectionScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('checklistScreen').style.display = 'none';
     document.getElementById('listScreen').style.display = 'block';
     await displayListView('all');
+    setupListViewEventListeners();
 }
+window.openListView = openListView;
 
 // Display Pokémon list
 async function displayListView(region) {

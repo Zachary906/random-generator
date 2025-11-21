@@ -4158,6 +4158,9 @@ function updateChecklistStats() {
     
     document.getElementById('checkedCount').textContent = checked;
     document.getElementById('totalCount').textContent = total;
+    
+    // Also update list view stats if it's visible
+    updateListViewStats();
 }
 
 // Setup event listeners for checklist
@@ -4400,6 +4403,23 @@ async function displayListView(region) {
     
     // Update total count
     document.getElementById('listTotalCount').textContent = pokemonDetails.length;
+    updateListViewStats();
+}
+
+// Update list view stats display
+function updateListViewStats() {
+    const container = document.getElementById('listContainer');
+    if (!container) return;
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const total = checkboxes.length;
+    
+    const caughtSpan = document.getElementById('listCaughtCount');
+    const totalSpan = document.getElementById('listTotalCount');
+    
+    if (caughtSpan) caughtSpan.textContent = checked;
+    if (totalSpan) totalSpan.textContent = total;
 }
 
 // Setup list view event listeners

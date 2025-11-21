@@ -41,8 +41,38 @@ class YearLockdownSystem {
 
     init() {
         this.checkYearChange();
+        // Clean up any leftover blocking styles from previous lockdown
+        this.cleanupBlockingStyles();
         // Check every hour if year has changed
         setInterval(() => this.checkYearChange(), 3600000);
+    }
+
+    /**
+     * Clean up any blocking styles left from lockdown
+     */
+    cleanupBlockingStyles() {
+        // Re-enable all buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.style.pointerEvents = 'auto';
+        });
+
+        // Re-enable clickable elements
+        document.querySelectorAll('[onclick], .wheel-option, .category-btn, .region-btn').forEach(el => {
+            el.disabled = false;
+            el.style.opacity = '1';
+            el.style.cursor = 'pointer';
+            el.style.pointerEvents = 'auto';
+        });
+
+        // Re-enable inputs
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            input.disabled = false;
+            input.style.opacity = '1';
+            input.style.cursor = 'pointer';
+        });
     }
 
     /**
